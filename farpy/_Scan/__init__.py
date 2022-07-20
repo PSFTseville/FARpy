@@ -1,0 +1,1 @@
+from farpy._Scan._2D_scan import Scan2D
