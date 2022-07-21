@@ -8,12 +8,21 @@ Pablo Oyola for his library to analyse MEGA output
 """
 
 import os
-import sys
+import logging
 import numpy as np
 import xarray as xr
 import farpy._Plotting as libplt
 import matplotlib.pyplot as plt
+from farpy._paths import Path
+__all__ = ['Modes']
+# Initialise some classes
+paths = Path()
+logger = logging.getLogger('farpy.Models')
 
+
+# ------------------------------------------------------------------------------
+# --- Auxiliar function
+# ------------------------------------------------------------------------------
 def _getFileList(path: str = '.', start: str = 'vth', extension: str = ''):
     """
     Produces a sorted file name list with all the harmonics files found
@@ -41,8 +50,24 @@ def _getFileList(path: str = '.', start: str = 'vth', extension: str = ''):
     return filenames
 
 
+# ------------------------------------------------------------------------------
+# --- Modes class
+# ------------------------------------------------------------------------------
 class Modes:
-    def __init__(self, model_name: str, path: str = None):
+    """
+    Read and handle mode amplitude information.
+
+    Jose Rueda: jrrueda@us.es
+    """
+    def __init__(self, model_name: str = None, path: str = None):
+        """
+        Initialise the class and read the files
+
+        @param model_name: Name of the model to load, it is assumed to be inside
+            the model folder, which is assumed to be inside the FAR3d folder
+        @param path: if present, this folder will be assumed to contain all the
+            results, and the model_name input will be ignored
+        """
         if path is None:
             path = os.path.join(os.getenv('HOME'), 'FAR3d',
                                 'Models', model_name)
@@ -52,22 +77,20 @@ class Modes:
         self.path = path
         self._read_files()
 
-    def _read_files(self):
-        names = [
-            'vthprlf',
-            'vth',
-            'vr',
-            'vprlf',
-            'uzt',
-            'psi',
-            'pr',
-            'phi',
-            'nf',
-        ]
+    def _read_files(self, names: list = None):
+        """
+        Read the files
+
+        @param names: prefix of the files to be read, if none, all simulation
+            files will be read
+        """
+        if names is None:
+            names = ['vthprlf', 'vth', 'vr', 'vprlf', 'uzt', 'psi', 'pr',
+                     'phi', 'nf']
         # see how many runs there are:
         files_of_vth = _getFileList(self.path, start='psi')
         nruns = len(files_of_vth)
-        print('Found %i runs' % nruns)
+        logger.info('Found %i runs', nruns)
         runs = []
         for file in files_of_vth:
             runs.append(file.split('_')[1])
@@ -103,43 +126,44 @@ class Modes:
         if (2*len(n)+1) != two_nmodes_plus_1:
             raise Exception('Something went wrong reading the header')
         # preallocate the macro matrix
-        data = np.empty(
-            (nruns, unique_n.size, unique_m.size, 2, len(names), nr))
+        # data = np.empty(
+        #     (nruns, unique_n.size, unique_m.size, 2, len(names), nr))
         # read all the files:
-        for iis, s in enumerate(runs):
-            for ifile, file in enumerate(names):
-                print('Reading %s' % file)
+        data = xr.Dataset()
+        for file in names:
+            logger.info('Reading %s', file)
+            dum = np.empty(
+                (nruns, unique_n.size, unique_m.size, 2, nr))
+            for iis, s in enumerate(runs):
                 filename = os.path.join(self.path, file + '_' + s)
                 dummy = np.loadtxt(filename, skiprows=1)
                 # put each colum in place
                 for icolum in range(1, int((two_nmodes_plus_1-1)/2)):
                     # amplitude
-                    data[iis, indeces_n[icolum-1], indeces_m[icolum-1], 0, ifile, :] =\
+                    dum[iis, indeces_n[icolum-1], indeces_m[icolum-1], 0, :] =\
                         dummy[:, icolum]
-                    
-                    data[iis, indeces_n[icolum-1], indeces_m[icolum-1], 1, ifile, :] =\
+                   
+                    dum[iis, indeces_n[icolum-1], indeces_m[icolum-1], 1, :] =\
                         dummy[:, icolum + n.size]
-        # Now create the magic of the array:
-        self.data = xr.DataArray(
-            data,
-            dims=('run', 'n', 'm', 'R_I', 'var_name', 'r'),
-            coords={'run': runs, 'n': unique_n.astype(str), 'm': unique_m.astype(str), 'R_I': ['R', 'I'],
-                    'var_name': names, 'r': dummy[:, 0]}
-        )
+            data[file] = xr.DataArray(
+                dum.copy(), dims=('run', 'n', 'm', 'R_I', 'r'),
+                coords={'run': runs, 'n': unique_n, 'm': unique_m, 
+                        'R_I': ['R', 'I'], 'r': dummy[:, 0]})
+        self.data = data
 
-    def plotRho(self, run = '0000', n = '1', m = '1', R_I = 'R', var_name='pr',
-                ax=None, ax_params: dict = {}):
+    def plotRho(self, run: str = '0000', n: int = 1, m: int = 1, R_I: str = 'R',
+                var_name='pr', ax=None, ax_params: dict = {}):
         """
         Plot the radial profile of the mode
 
         @param run: string identifying the runs to plot. It can be a list of
              strings, in that case, several runs will be plotted
-        @param n: number of the mode to plot. Can be a string, an array of
-            strings, a number or array of numbers
-        @param m: m number of the mode to plot. Can be a string, an array of
-            strings, a number or array of numbers
+        @param n: number of the mode to plot. can be an integer or an array 
+            (or list) of integers
+        @param m: number of the mode to plot. can be an integer or an array 
+            (or list) of integers
         @param R_I: 'R' to plot the real part, 'I' to plot the imaginary
-        @param var_name: variable to be plotted. See self.data.var for a list
+        @param var_name: variable to be plotted. See self.data for a list
         @param ax: axes where to plot, is none, new one will be created
         @param ax_params: axis parameters for the function axis_beuty. Notice
             that they will not be applyed if ax is not None
@@ -149,30 +173,35 @@ class Modes:
             'xlabel': 'r',
             'grid': 'both',
         }
+        ax_options.update(ax_params)
         # check that everything is a list as it should:
         if not isinstance(run, (list, np.ndarray)):
             run = np.array([run])
-        if not isinstance(n, (np.ndarray,)):
-            if not isinstance(n, (list,)):
-                n = np.array([n])
-            else:
-                n = np.array(n)
-        n = n.astype(str)
-        if not isinstance(m, (np.ndarray,)):
-            if not isinstance(m, (list,)):
-                m = np.array([m])
-            else:
-                m = np.array(m)
-        m = m.astype(str)
+        if n is not None:
+            if not isinstance(n, (np.ndarray,)):
+                if not isinstance(n, (list,)):
+                    n = np.array([n])
+                else:
+                    n = np.array(n)
+        else:
+            n = self.data.n.values
+        if m is not None:
+            if not isinstance(m, (np.ndarray,)):
+                if not isinstance(m, (list,)):
+                    m = np.array([m])
+                else:
+                    m = np.array(m)
+        else:
+            m = self.data.m.values
         if not isinstance(R_I, (list, np.ndarray)):
             R_I = np.array([R_I])
         if not isinstance(var_name, (list, np.ndarray)):
             var_name = np.array([var_name])
         # Check that we have that variable
         for s in var_name:
-            if s not in self.data.var_name:
+            if s not in self.data.keys():
                 print('Variable not found: %s', s)
-                print('Possible variables: ', self.data.var_name)
+                print('Possible variables: ', self.data.keys())
                 raise Exception('Not available variable')
         # --- Now the loop
         if ax is None:
@@ -188,8 +217,11 @@ class Modes:
 
                             name = '%s: %s %s n=%s m=%s' % (r, vvar, RI, nn, mm)
                             print(name)
+                            # Select the data
                             plt.plot(self.data.r,
-                                     self.data.sel(run=r, var_name=vvar, n=nn,
-                                                   m=mm, R_I=RI))
+                                     self.data[vvar].sel(run=r, n=nn,
+                                                         m=mm, R_I=RI).values,
+                                     label='n=%i - m=%i'%(nn, mm))
         if created:
-            libplt.axis_beauty(ax, ax_params)
+            libplt.axis_beauty(ax, ax_options)
+        return ax

@@ -17,6 +17,7 @@ class Path:
         """Initialise the class"""
         home = os.getenv("HOME")
         self.farpy = os.path.join(home, 'FARpy/')
+        self.far3d = os.path.join(home, 'FAR3d/')
         self.Results = os.path.join(self.farpy, 'Results')
         # Generic case, assume you have linux :-)
         self.fonts = [
