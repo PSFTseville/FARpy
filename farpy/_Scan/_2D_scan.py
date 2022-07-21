@@ -2,11 +2,14 @@
 Library to read 2D scans
 """
 import os
-import sys
+import decimal
 import numpy as np
 import xarray as xr
-import decimal
+from datetime import datetime
 from farpy._farprt import Farprt
+from farpy._paths import Path
+
+path = Path()
 
 class Scan2D():
     """
@@ -31,9 +34,17 @@ class Scan2D():
         """
         Initialise the scan
 
-        """
-        self.parentFolder = parentFolder
+        This will explore the folder structure and see the variables which where
+        used for the scan
 
+        Jose Rueda: jrrueda@us.es
+
+        @param parentFolder: root folder which contain the scan data
+        """
+        # --- Pre allocate a bit of attributes:
+        self.parentFolder = parentFolder
+        self.farprt = None  # It will be file with the farprt objects
+        self.growthRateBlock = None  # It will be filled with the growthrate
         # --- See what it is inside
         var1Values = []
         var2Values = []
@@ -66,6 +77,12 @@ class Scan2D():
         d = decimal.Decimal(var2Values[0])
         self.vars[1].attrs['decimals'] = abs(d.as_tuple().exponent)
 
+    def readGrowthRateBlock(self):
+        """
+        Read the glowth rate and mode frequency from the scan
+
+        #TODO: handle the case whith different n
+        """
         # - Load the data
         # Allocate the space for latter
         n1 = self.vars[0].size
@@ -81,23 +98,42 @@ class Scan2D():
                 tmp2 = self.vars[1].attrs['decimals']
                 fmt1 = f'_%.{tmp1}f'
                 fmt2 = f'_%.{tmp2}f'
-                name = os.path.join(parentFolder, 
-                                    var1Name + fmt1%var1,
-                                    var2Name + fmt2%var2,
+                name = os.path.join(self.parentFolder, 
+                                    self.vars[0].attrs['long_name'] + fmt1%var1,
+                                    self.vars[1].attrs['long_name'] + fmt2%var2,
                                     'farprt'
                 )
                 fars[i1, i2] = Farprt(name)
                 fars[i1, i2].readGrowthRate()
-                OMEGA[i1, i2] = fars[i1, i2].GrowthRateBlock['avg_omega'].values[0]
-                GAMMA[i1, i2] = fars[i1, i2].GrowthRateBlock['avg_gamma'].values[0]
+                OMEGA[i1, i2] = \
+                    fars[i1, i2].growthRateBlock['avg_omega'].values
+                GAMMA[i1, i2] = \
+                    fars[i1, i2].growthRateBlock['avg_gamma'].values
         self.farprt = fars
-        self.GrowthRateBlock = xr.Dataset()
+        self.growthRateBlock = xr.Dataset()
         coords = {}
-        coords[var1Name] = self.vars[0].values
-        coords[var2Name] = self.vars[1].values
-        self.GrowthRateBlock['omega'] = \
-            xr.DataArray(OMEGA, dims=(var1Name, var2Name),
+        coords[self.vars[0].attrs['long_name']] = self.vars[0].values
+        coords[self.vars[1].attrs['long_name']] = self.vars[1].values
+        self.growthRateBlock['omega'] = \
+            xr.DataArray(OMEGA, dims=(self.vars[0].attrs['long_name'],
+                                      self.vars[1].attrs['long_name']),
                          coords=coords)
-        self.GrowthRateBlock['gamma'] = \
-            xr.DataArray(GAMMA, dims=(var1Name, var2Name),
-                         coords=coords)
+        self.growthRateBlock['gamma'] = \
+            xr.DataArray(GAMMA, dims=(self.vars[0].attrs['long_name'], 
+                                      self.vars[1].attrs['long_name']))
+    
+    def exportGrowthRateBlock(self, filename: str = None):
+        """
+        Export the readed growthRateBlock into a file
+
+        @filename: Filename to save the results, if present, the format variable
+            will be ignored. And the format will be deduced from the file 
+            extension
+        """
+        if filename is None:
+            now = datetime.now()
+            string = now.strftime("%Y_%m_%d_%H_%M_%S")
+            filename = \
+                os.path.join(path.Results, 'S2D_growthRateBlock' + string 
+                             + '.nc')
+        self.growthRateBlock.to_netcdf(filename)

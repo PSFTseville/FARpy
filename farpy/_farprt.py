@@ -254,24 +254,24 @@ class Farprt:
             OMEGA[imm, inn, ivar] = omega[i]
             GAMMA[imm, inn, ivar] = gamma[i]
         # Save everything in a array
-        self.GrowthRateBlock = xr.Dataset()
-        self.GrowthRateBlock['omega'] = \
+        self.growthRateBlock = xr.Dataset()
+        self.growthRateBlock['omega'] = \
             xr.DataArray(OMEGA, dims=('m', 'n', 'var'),
                          coords={'var': vars, 'm': m_unique, 'n': n_unique})
-        self.GrowthRateBlock['gamma'] = \
+        self.growthRateBlock['gamma'] = \
             xr.DataArray(GAMMA, dims=('m', 'n', 'var'))
-        self.GrowthRateBlock['avg_omega_n'] = \
+        self.growthRateBlock['avg_omega_n'] = \
             xr.DataArray(np.nanmean(OMEGA, axis=(0, 2)), dims='n')
-        self.GrowthRateBlock['avg_gamma_n'] = \
+        self.growthRateBlock['avg_gamma_n'] = \
             xr.DataArray(np.nanmean(GAMMA, axis=(0, 2)), dims='n')
-        self.GrowthRateBlock['avg_omega'] = \
-            xr.DataArray(np.nanmean(OMEGA)
-        self.GrowthRateBlock['avg_gamma'] = \
-            xr.DataArray(np.nanmean(GAMMA)
+        self.growthRateBlock['avg_omega'] = \
+            xr.DataArray(np.nanmean(OMEGA))
+        self.growthRateBlock['avg_gamma'] = \
+            xr.DataArray(np.nanmean(GAMMA))
         # A bit of metadata is always welcome
-        self.GrowthRateBlock['n'].attrs['long_name'] = 'Toroidal mode number'
-        self.GrowthRateBlock['m'].attrs['long_name'] = 'Poloidal mode number'
-        self.GrowthRateBlock['var'].attrs['long_name'] = 'Var Short Name'
+        self.growthRateBlock['n'].attrs['long_name'] = 'Toroidal mode number'
+        self.growthRateBlock['m'].attrs['long_name'] = 'Poloidal mode number'
+        self.growthRateBlock['var'].attrs['long_name'] = 'Var Short Name'
    
     def st2time(self, step: int):
         print('ToBe Done')

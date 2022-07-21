@@ -11,7 +11,7 @@ Needed packages. Only listed 'non-standard' packages. See below, there is a scri
 
 #### Essentials
 The module will not work without them:
-- f90nml: To read FORTRAN namelist in an easy way (needed since version 0.1.10) `pip install f90nml`. This is the suite standard to read and write namelists!!!
+- f90nml: To read FORTRAN namelist in an easy way `pip install f90nml`. This is the suite standard to read and write namelists!!!
 - xarray: This will provide the basic format to save the data
 
 #### Optional
@@ -58,6 +58,11 @@ There are three files containing the paths and routes for the suite:
 - As everything has doc-strings, you can always write in the python terminal <fname>? and you will get all the description of the <fname> method or object
 - The routines in the Example folder are intended to illustrate the use of the different tools in the suite. Please, if you want to play with them, make your own copy on 'MyRoutines', modifying the examples can cause merge conflicts in the future
 - If you have installed Doxygen you can generate the documentation in html and LaTex format just opening a terminal in the Suite root directory and typing  `doxygen Doxyfile`. Once the documentation is generated, you can open the index with the following command `xdg-open doc/index.html`. For a (old and outdated) Doxygen generated documentation, see: <https://hdvirtual.us.es/discovirt/index.php/s/FBjZ9FPfjjwMDS2> download the content and open the index.html file, inside the html folder.
+
+## Data export
+All data exported and saved by this tool is done with netCDF. Platform independendent and binary format. There is no plans to add aditional formats such as ASCII text.
+
+If the user is *alergic* to the use of programing languages in order to read the netCDF, this NASA program could be usefull: https://www.giss.nasa.gov/tools/panoply/download/ It allows you to open and plot the variables in the netCDF file
 
 ## Active Development
 ### Version control
