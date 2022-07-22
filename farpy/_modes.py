@@ -86,7 +86,7 @@ class Modes:
         """
         if names is None:
             names = ['vthprlf', 'vth', 'vr', 'vprlf', 'uzt', 'psi', 'pr',
-                     'phi', 'nf']
+                     'phi', 'nf']            
         # see how many runs there are:
         files_of_vth = _getFileList(self.path, start='psi')
         nruns = len(files_of_vth)
@@ -94,7 +94,6 @@ class Modes:
         runs = []
         for file in files_of_vth:
             runs.append(file.split('_')[1])
-            print('run %s found' % runs[-1])
         # Read a header, to allocate the variables size:
         filename = os.path.join(self.path, files_of_vth[0])
         nr, two_nmodes_plus_1 = np.loadtxt(filename, skiprows=1).shape
@@ -103,16 +102,35 @@ class Modes:
         fid.close()
         n = []
         m = []
-        for s in line.split():
-            if s == 'I':  # n/m repeat, so stop
-                break
-            if len(s.split('/')) == 2:
-                m.append(int(s.split('/')[0]))
-            # the m comes with /, so the only other numbers in the line are n
-            try:
-                n.append(int(s))
-            except ValueError:  # we have an R
-                pass
+        try:  # New far3D format, with R, I
+            found_I = False
+            for s in line.split():
+                if s == 'I':  # n/m repeat, so stop
+                    found_I = True
+                    break
+                if len(s.split('/')) == 2:
+                    m.append(int(s.split('/')[0]))
+                # the m comes with /, so the only other numbers in the line are n
+                try:
+                    n.append(int(s))
+                except ValueError:  # we have an R
+                    pass
+            if not found_I:
+                raise Exception()
+        except:
+            n = []
+            m = []
+            for s in line.split():
+                if len(s.split('/')) == 2:
+                    dummy_m = int(s.split('/')[0])
+                    if dummy_m < 0:  # n/m repeat, so stop
+                        break
+                    m.append(dummy_m)
+                # the m comes with /, so the only other numbers in the line are n
+                try:
+                    n.append(int(s))
+                except ValueError:  # we have an R
+                    pass
         n = np.array(n)
         unique_n = np.unique(n)
         indeces_n = np.zeros(n.size, dtype=int)
@@ -123,8 +141,14 @@ class Modes:
         indeces_m = np.zeros(m.size, dtype=int)
         for iim, mm in enumerate(m):
             indeces_m[iim] = np.where(unique_m == mm)[0]
+
         if (2*len(n)+1) != two_nmodes_plus_1:
+            print('n:', n)
+            print('m:', m)
+            print('n shape:', n.shape)
+            print('m shape:', m.shape)
             raise Exception('Something went wrong reading the header')
+
         # preallocate the macro matrix
         # data = np.empty(
         #     (nruns, unique_n.size, unique_m.size, 2, len(names), nr))
@@ -138,11 +162,10 @@ class Modes:
                 filename = os.path.join(self.path, file + '_' + s)
                 dummy = np.loadtxt(filename, skiprows=1)
                 # put each colum in place
-                for icolum in range(1, int((two_nmodes_plus_1-1)/2)):
+                for icolum in range(1, int((two_nmodes_plus_1+1)/2)):
                     # amplitude
                     dum[iis, indeces_n[icolum-1], indeces_m[icolum-1], 0, :] =\
                         dummy[:, icolum]
-                   
                     dum[iis, indeces_n[icolum-1], indeces_m[icolum-1], 1, :] =\
                         dummy[:, icolum + n.size]
             data[file] = xr.DataArray(
@@ -152,7 +175,8 @@ class Modes:
         self.data = data
 
     def plotRho(self, run: str = '0000', n: int = 1, m: int = 1, R_I: str = 'R',
-                var_name='pr', ax=None, ax_params: dict = {}):
+                var_name='pr', ax=None, ax_params: dict = {}, 
+                line_params: dict = {}):
         """
         Plot the radial profile of the mode
 
@@ -165,8 +189,11 @@ class Modes:
         @param R_I: 'R' to plot the real part, 'I' to plot the imaginary
         @param var_name: variable to be plotted. See self.data for a list
         @param ax: axes where to plot, is none, new one will be created
-        @param ax_params: axis parameters for the function axis_beuty. Notice
+        @param ax_params: axis parameters for the function axis_beauty. Notice
             that they will not be applyed if ax is not None
+        @param line_params: line parameters for the function matplotlib plot 
+            function. Notice that no label can't be set, as it is set
+            automatically in the routine with the m/n value
         """
         # Initialise plotting options
         ax_options = {
@@ -216,12 +243,13 @@ class Modes:
                         for ivar, vvar in enumerate(var_name):
 
                             name = '%s: %s %s n=%s m=%s' % (r, vvar, RI, nn, mm)
-                            print(name)
+                            logging.info('Plotting %s', name)
                             # Select the data
-                            plt.plot(self.data.r,
+                            ax.plot(self.data.r,
                                      self.data[vvar].sel(run=r, n=nn,
                                                          m=mm, R_I=RI).values,
-                                     label='n=%i - m=%i'%(nn, mm))
+                                     label='%s: n=%i - m=%i'%(RI, nn, mm),
+                                     **line_params)
         if created:
             libplt.axis_beauty(ax, ax_options)
         return ax

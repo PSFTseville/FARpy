@@ -29,73 +29,73 @@ profilesOrderInputs = {
             },
             'nnbi': {
                 'i': 2,  # Column index in the file
-                'units': ' [$10^{20}$m${}^{-3}$]',  # Units
+                'units': '$10^{20}$m${}^{-3}$',  # Units
                 'longName': 'Density of energetic particles',
                 'shortName': '$n_{nbi}$'
             },
             'ni': {
                 'i': 3,  # Column index in the file
-                'units': ' [$10^{20}$m${}^{-3}$]',  # Units
+                'units': '$10^{20}$m${}^{-3}$',  # Units
                 'longName': 'Thermal ion density',
                 'shortName': '$n_{i}$'
             },
             'ne': {
                 'i': 4,  # Column index in the file
-                'units': ' [$10^{20}$m${}^{-3}$]',  # Units
+                'units': '$10^{20}$m${}^{-3}$',  # Units
                 'longName': 'Thermal electron density',
                 'shortName': '$n_{e}$'
             },
             'nimp': {
                 'i': 5,  # Column index in the file
-                'units': ' [$10^{20}$m${}^{-3}$]',  # Units
+                'units': '$10^{20}$m${}^{-3}$',  # Units
                 'longName': 'Impurity density',
                 'shortName': '$n_{imp}$'
             },
             'tnbi': {
                 'i': 6,  # Column index in the file
-                'units': ' [keV]',  # Units
+                'units': 'keV',  # Units
                 'longName': 'Temperature of the energetic particles',
                 'shortName': '$T_{nbi}$',
             },
             'ti': {
                 'i': 7,  # Column index in the file
-                'units': ' [keV]',  # Units
+                'units': 'keV',  # Units
                 'longName': 'Temperature thermal ions',
                 'shortName': '$T_{i}$',
             },
             'te': {
                 'i': 8,  # Column index in the file
-                'units': ' [keV]',  # Units
+                'units': 'keV',  # Units
                 'longName': 'Temperature thermal electrons',
                 'shortName': '$T_{e}$',
             },
             'pnbi': {
                 'i': 9,  # Column index in the file
-                'units': ' [kPa]',  # Units
+                'units': 'kPa',  # Units
                 'longName': 'Presure of the energetic particles',
                 'shortName': '$p_{nbi}$',
             },
             'p': {
                 'i': 10,  # Column index in the file
-                'units': ' [kPa]',  # Units
+                'units': 'kPa',  # Units
                 'longName': 'Presure of the thermal particles',
                 'shortName': '$p$',
             },
             'pequil': {
                 'i': 11,  # Column index in the file
-                'units': ' [kPa]',  # Units
+                'units': 'kPa',  # Units
                 'longName': 'Equilibrium pressure',
                 'shortName': '$\\phi_i$',
             },
             'vtor': {
                 'i': 12,  # Column index in the file
-                'units': ' [km/s]',  # Units
+                'units': 'km/s',  # Units
                 'longName': 'Plasma toroidal rotation',
                 'shortName': '$v_{tor}$',
             },
             'vpol': {
                 'i': 13,  # Column index in the file
-                'units': ' [km/s]',  # Units
+                'units': 'km/s',  # Units
                 'longName': 'Plasma poloidal rotation',
                 'shortName': '$v_{pol}$',
             },
@@ -457,37 +457,37 @@ profilesOrderExDat = {   # Order of the file profiles.dat
         },
         'tnbi': {
             'i': 4,  # Column index in the file
-            'units': ' [keV]',  # Units
+            'units': 'keV',  # Units
             'longName': 'Temperature of the energetic particles',
             'shortName': '$T_{nbi}$',
         },
         'ti': {
             'i': 5,  # Column index in the file
-            'units': ' [keV]',  # Units
+            'units': 'keV',  # Units
             'longName': 'Temperature thermal ions',
             'shortName': '$T_{i}$',
         },
         'te': {
             'i': 6,  # Column index in the file
-            'units': ' [keV]',  # Units
+            'units': 'keV',  # Units
             'longName': 'Temperature thermal electrons',
             'shortName': '$T_{e}$',
         },
         'vztor': {
             'i': 7,  # Column index in the file
-            'units': ' [m/s]',  # Units
+            'units': 'm/s',  # Units
             'longName': 'Plasma toroidal rotation',
             'shortName': '$v_{tor}$',
         },
         'vtor': {
             'i': 8,  # Column index in the file
-            'units': ' [m/s]',  # Units
+            'units': 'm/s',  # Units
             'longName': 'Plasma toroidal rotation',
             'shortName': '$v_{tor}$',
         },
         'vtor': {
             'i': 9,  # Column index in the file
-            'units': ' [m/s]',  # Units
+            'units': 'm/s',  # Units
             'longName': 'Thermal ion velocity',
             'shortName': '$v_{tor}$',
         },
@@ -531,43 +531,43 @@ profilesOrderExDat = {   # Order of the file profiles.dat
         },
         'tnbi': {
             'i': 5,  # Column index in the file
-            'units': ' [keV]',  # Units
+            'units': 'keV',  # Units
             'longName': 'Temperature of the energetic particles',
             'shortName': '$T_{nbi}$',
         },
         'ti': {
             'i': 6,  # Column index in the file
-            'units': ' [keV]',  # Units
+            'units': 'keV',  # Units
             'longName': 'Temperature thermal ions',
             'shortName': '$T_{i}$',
         },
         'te': {
             'i': 7,  # Column index in the file
-            'units': ' [keV]',  # Units
+            'units': 'keV',  # Units
             'longName': 'Temperature thermal electrons',
             'shortName': '$T_{e}$',
         },
         'tnbi2': {
             'i': 8,  # Column index in the file
-            'units': ' [keV]',  # Units
+            'units': 'keV',  # Units
             'longName': 'Temperature of the energetic particles, second specie',
             'shortName': '$T_{nbi2}$',
         },
         'vztor': {
             'i': 9,  # Column index in the file
-            'units': ' [m/s]',  # Units
+            'units': 'm/s',  # Units
             'longName': 'Plasma toroidal rotation',
             'shortName': '$v_{tor}$',
         },
         'vtor': {
             'i': 10,  # Column index in the file
-            'units': ' [m/s]',  # Units
+            'units': 'm/s',  # Units
             'longName': 'Plasma toroidal rotation',
             'shortName': '$v_{tor}$',
         },
         'vtor': {
             'i': 11,  # Column index in the file
-            'units': ' [m/s]',  # Units
+            'units': 'm/s',  # Units
             'longName': 'Thermal ion velocity',
             'shortName': '$v_{tor}$',
         },

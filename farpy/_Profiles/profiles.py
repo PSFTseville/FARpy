@@ -1,5 +1,7 @@
 """
 Read and write profiles
+
+Jose Rueda Rueda: jrrueda@us.es
 """
 
 import numpy as np
@@ -7,16 +9,23 @@ import matplotlib.pyplot as plt
 from farpy._Profiles._profiles_header import profilesOrderInputs, \
     profilesOrderDat, profilesOrderExDat
 from farpy._Plotting._settings import axis_beauty
+import xarray as xr
+
 
 class Profiles:
     """
     Parent class for the profiles, just contains the plot and header
     """
 
-    def _init_(self):
+    def __init__(self):
+        """
+        Just initialise the main attributes
+        """
         self.file = None
-        self.header = {}
         self.data = []
+
+    def __getitem__(self, item):
+        return self.data[item]
 
     def plot(self, var='te', ax=None, ax_params={}, line_params={}):
         """
@@ -29,9 +38,6 @@ class Profiles:
         @param ax_params: parameters for the axis beauty
         @param line_params: line parameters for the plt.plot function
         """
-        # --- Get the index:
-        column_to_plot = self.header['info'][var]['i']
-        rho_colum = self.header['info']['rho']['i']
         # --- Default plotting options
         ax_options = {
             'grid': 'both',
@@ -46,8 +52,7 @@ class Profiles:
             created = True
         else:
             created = False
-        ax.plot(self.data[:, rho_colum], self.data[:, column_to_plot],
-                **line_params)
+        self.data[var].plot(**line_params)
         # axis beauty:
         if created:
             ax = axis_beauty(ax, ax_options)
@@ -78,53 +83,73 @@ class ProfilesInput(Profiles):
         """
         self.file = filename
         # --- Initilise the profiles
-        ## Field at the magnetic axis [in T]
-        self.bt0 = 0.0
-        ## Major radius
-        self.rmajr = 0.0
-        ## Minor radius
-        self.rminr = 0.0
-        ## Average elongation
-        self.kappa = 0.0
-        ## Average triangularity
-        self.delta = 0.0
-        ## Main impurity
-        self.mainImpurity = ''
-        ## Ion mass over protton mass
-        self.mi_mp = 0.0
-        ## beta at axis
-        self.beta0 = 0.0
-        self.Rmax = 0.0
-
-        ## Header
-        self.header = {'info': profilesOrderInputs[DIIID_u][alpha_on]}
+        prof = xr.Dataset()
+        # Header
+        header = profilesOrderInputs[DIIID_u][alpha_on]
 
         # --- Read the profiles
         if filename is not None:
             with open(filename) as fid:
                 dummy = fid.readline()
                 dummy = fid.readline()
-                self.bt0 = float(fid.readline())
+                prof['bt0'] = xr.DataArray(float(fid.readline()))
+                prof['bt0'].attrs['long_name'] = 'Magnetic field on axis'
+                prof['bt0'].attrs['units'] = 'T'
                 dummy = fid.readline()
-                self.rmajr = float(fid.readline())
+                prof['rmajr'] = xr.DataArray(float(fid.readline()))
+                prof['rmajr'].attrs['long_name'] = \
+                    'Geometric Center Major radius'
+                prof['rmajr'].attrs['units'] = 'm'
                 dummy = fid.readline()
-                self.rminr = float(fid.readline())
+                prof['rminr'] = xr.DataArray(float(fid.readline()))
+                prof['rminr'].attrs['long_name'] = 'Minor radius'
+                prof['rminr'].attrs['units'] = 'm'
                 dummy = fid.readline()
-                self.kappa = float(fid.readline())
+                prof['kappa'] = xr.DataArray(float(fid.readline()))
+                prof['kappa'].attrs['long_name'] = 'Avg. Elongation'
+                prof['kappa'].attrs['units'] = ''
                 dummy = fid.readline()
-                self.delta = float(fid.readline())
+                prof['delta'] = xr.DataArray(float(fid.readline()))
+                prof['delta'].attrs['long_name'] = \
+                    'Avg. Top/Bottom Triangularity'
+                prof['delta'].attrs['units'] = ''
                 dummy = fid.readline()
-                self.mainImpurity = fid.readline()
+                prof['mainImpurity'] = xr.DataArray(fid.readline())
+                prof['mainImpurity'].attrs['long_name'] = \
+                    'Main Contaminant Species'
+                prof['mainImpurity'].attrs['units'] = ''
                 dummy = fid.readline()
-                self.mi_mp = float(fid.readline())
+                prof['mi_mp'] = xr.DataArray(float(fid.readline()))
+                prof['mi_mp'].attrs['long_name'] = \
+                    'Main Ion Species mass/proton'
+                prof['mi_mp'].attrs['units'] = ''
                 macabro = fid.readline()
                 elements = macabro.split('=')
-                self.beta0 = float(elements[1].split(',')[0])
-                self.Rmax = float(elements[2])
-                self.eps = self.rminr / self.rmajr
+                prof['beta0'] = xr.DataArray(float(elements[1].split(',')[0]))
+                prof['beta0'].attrs['long_name'] = 'beta(0)'
+                prof['beta0'].attrs['units'] = ''
+                prof['Rmax'] = xr.DataArray(float(elements[2]))
+                prof['beta0'].attrs['long_name'] = 'Rmax'
+                prof['beta0'].attrs['units'] = 'm'
+                prof['eps'] = xr.DataArray(prof.rminr / prof.rmajr)
+                prof['eps'].attrs['long_name'] = 'Aspect ratio'
+                prof['eps'].attrs['units'] = ''
                 # Finally end of header, uff
             # Now just read and store the profiles
-            self.data = np.loadtxt(filename, skiprows=19)
+            dummy = np.loadtxt(filename, skiprows=18)
+            icolumrho = header['rho']['i']
+
+            for k in header.keys():
+                if k == 'rho':
+                    continue  # The rho is the axis
+                icolum = header[k]['i']
+                prof[k] = xr.DataArray(dummy[:, icolum],
+                                       dims=('rho'),
+                                       coords={'rho': dummy[:, icolumrho]})
+                prof[k].attrs['long_name'] = header[k]['longName']
+                prof[k].attrs['short_name'] = header[k]['shortName']
+                prof[k].attrs['units'] = header[k]['units']
+        self.data = prof
 
 
 class ProfilesOutputDat(Profiles):

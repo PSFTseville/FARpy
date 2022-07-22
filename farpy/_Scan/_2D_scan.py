@@ -2,14 +2,24 @@
 Library to read 2D scans
 """
 import os
+import logging
 import decimal
 import numpy as np
 import xarray as xr
+import scipy.constants as cnt
+import matplotlib.pyplot as plt
 from datetime import datetime
+from tqdm import tqdm
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 from farpy._farprt import Farprt
+from farpy._namelist import readNamelist
 from farpy._paths import Path
+from farpy._Profiles.profiles import ProfilesInput
+from farpy._modes import Modes
 
 path = Path()
+logger = logging.getLogger('farpy.Scans')
+
 
 class Scan2D():
     """
@@ -45,6 +55,8 @@ class Scan2D():
         self.parentFolder = parentFolder
         self.farprt = None  # It will be file with the farprt objects
         self.growthRateBlock = None  # It will be filled with the growthrate
+        self.namelist = None  # It will be filled with the namelists
+        self.profiles = None  # It will be filled with the profiles
         # --- See what it is inside
         var1Values = []
         var2Values = []
@@ -77,6 +89,9 @@ class Scan2D():
         d = decimal.Decimal(var2Values[0])
         self.vars[1].attrs['decimals'] = abs(d.as_tuple().exponent)
 
+    # --------------------------------------------------------------------------
+    # --- Growth rate and frequency
+    # --------------------------------------------------------------------------
     def readGrowthRateBlock(self):
         """
         Read the glowth rate and mode frequency from the scan
@@ -92,35 +107,43 @@ class Scan2D():
         OMEGA.fill(np.nan)
         GAMMA = np.empty(shape=(n1, n2))
         GAMMA.fill(np.nan)
+        # Format for the files
+        tmp1 = self.vars[0].attrs['decimals']
+        tmp2 = self.vars[1].attrs['decimals']
+        fmt1 = f'_%.{tmp1}f'
+        fmt2 = f'_%.{tmp2}f'
+        logger.info('Reading growthrate and omega')
         for i1, var1 in enumerate(self.vars[0].values):
             for i2, var2 in enumerate(self.vars[1].values):
-                tmp1 = self.vars[0].attrs['decimals']
-                tmp2 = self.vars[1].attrs['decimals']
-                fmt1 = f'_%.{tmp1}f'
-                fmt2 = f'_%.{tmp2}f'
                 name = os.path.join(self.parentFolder, 
                                     self.vars[0].attrs['long_name'] + fmt1%var1,
                                     self.vars[1].attrs['long_name'] + fmt2%var2,
                                     'farprt'
                 )
-                fars[i1, i2] = Farprt(name)
-                fars[i1, i2].readGrowthRate()
-                OMEGA[i1, i2] = \
-                    fars[i1, i2].growthRateBlock['avg_omega'].values
-                GAMMA[i1, i2] = \
-                    fars[i1, i2].growthRateBlock['avg_gamma'].values
+                if os.path.isfile(name):
+                    fars[i1, i2] = Farprt(name)
+                    fars[i1, i2].readGrowthRate()
+                    OMEGA[i1, i2] = \
+                        fars[i1, i2].growthRateBlock['avg_omega'].values
+                    GAMMA[i1, i2] = \
+                        fars[i1, i2].growthRateBlock['avg_gamma'].values
         self.farprt = fars
         self.growthRateBlock = xr.Dataset()
         coords = {}
         coords[self.vars[0].attrs['long_name']] = self.vars[0].values
         coords[self.vars[1].attrs['long_name']] = self.vars[1].values
-        self.growthRateBlock['omega'] = \
+        self.growthRateBlock['om_r'] = \
             xr.DataArray(OMEGA, dims=(self.vars[0].attrs['long_name'],
                                       self.vars[1].attrs['long_name']),
                          coords=coords)
+        self.growthRateBlock['om_r'].attrs['units'] = ''
+        self.growthRateBlock['om_r'].attrs['long_name'] = 'Mode Frequency'
+
         self.growthRateBlock['gamma'] = \
             xr.DataArray(GAMMA, dims=(self.vars[0].attrs['long_name'], 
                                       self.vars[1].attrs['long_name']))
+        self.growthRateBlock['gamma'].attrs['units'] = ''
+        self.growthRateBlock['gamma'].attrs['long_name'] = 'Growth rate'
     
     def exportGrowthRateBlock(self, filename: str = None):
         """
@@ -137,3 +160,209 @@ class Scan2D():
                 os.path.join(path.Results, 'S2D_growthRateBlock' + string 
                              + '.nc')
         self.growthRateBlock.to_netcdf(filename)
+    
+    def plotGrowthRateBlock(self, var: str = 'omega', ax=None, **kargs):
+        """
+        2D plot of the growth rate variables
+        """
+        if ax is None:
+            fig, ax = plt.subplots()
+        # Plot the stuff
+        img = self.growthRateBlock[var].plot.pcolormesh(ax=ax,
+                                                        add_colorbar=False,
+                                                        **kargs)
+        ax.set_box_aspect(1)
+        
+        # Create the axis for the colobar
+        divider = make_axes_locatable(ax)
+        cax = divider.append_axes("right", size="10%", pad=0.05)
+        label = '%s [%s]' % (self.growthRateBlock[var].attrs['long_name'],
+                             self.growthRateBlock[var].attrs['units'])
+        plt.colorbar(img, label=label, cax=cax)
+        return ax
+        
+    # --------------------------------------------------------------------------
+    # --- Namelist and profiles
+    # --------------------------------------------------------------------------
+    def readNamelist(self, complete: bool = False):
+        """
+        Read the namelist files
+
+        @param complete: if True, all namefiles will be read, if False, just the
+            first one
+        """
+        # -- Allocate the space
+        n1 = self.vars[0].size
+        n2 = self.vars[1].size
+        namelist = np.full((n1, n2), None, dtype=np.ndarray)
+        # -- Format to read
+        tmp1 = self.vars[0].attrs['decimals']
+        tmp2 = self.vars[1].attrs['decimals']
+        fmt1 = f'_%.{tmp1}f'
+        fmt2 = f'_%.{tmp2}f'
+        if complete:
+            x1 = self.vars[0].values
+            x2 = self.vars[1].values
+        else:
+            x1 = self.vars[0].values[0:1]
+            x2 = self.vars[1].values[0:1]
+        logger.info('Reading input namelist')
+        # -- Read the files
+        for i1, var1 in enumerate(x1):
+            for i2, var2 in enumerate(x2):
+
+                name = os.path.join(self.parentFolder, 
+                                    self.vars[0].attrs['long_name'] + fmt1%var1,
+                                    self.vars[1].attrs['long_name'] + fmt2%var2,
+                                    'Input_Model'
+                )
+                namelist[i1, i2] = readNamelist(name)
+        self.namelist = namelist
+
+    def readProfiles(self, complete: bool = False):
+        """
+        Read the input profile file
+
+        @param complete if True, all namefiles will be read, if False, just the
+        first one
+        """
+        if self.namelist is None:
+            logger.warning('11: reading namelist')
+            self.readNamelist()
+        # -- Allocate the space
+        n1 = self.vars[0].size
+        n2 = self.vars[1].size
+        profiles = np.full((n1, n2), None, dtype=np.ndarray)
+        # -- Format to read
+        tmp1 = self.vars[0].attrs['decimals']
+        tmp2 = self.vars[1].attrs['decimals']
+        fmt1 = f'_%.{tmp1}f'
+        fmt2 = f'_%.{tmp2}f'
+        if complete:
+            x1 = self.vars[0].values
+            x2 = self.vars[1].values
+        else:
+            x1 = self.vars[0].values[0:1]
+            x2 = self.vars[1].values[0:1]
+        logger.info('Reading input profiles')
+        # -- Read the files
+        for i1, var1 in enumerate(x1):
+            for i2, var2 in enumerate(x2):
+                profileName = self.namelist[i1,i2]['ext_prof_name']
+                name = os.path.join(self.parentFolder, 
+                                    self.vars[0].attrs['long_name'] + fmt1%var1,
+                                    self.vars[1].attrs['long_name'] + fmt2%var2,
+                                    profileName
+                )
+                profiles[i1, i2] = ProfilesInput(name)
+        self.profiles = profiles
+
+    # --------------------------------------------------------------------------
+    # --- Modes
+    # --------------------------------------------------------------------------
+    def readModes(self):
+        """
+        Read the mode profiles
+        """
+        # -- Allocate the space
+        n1 = self.vars[0].size
+        n2 = self.vars[1].size
+        modes = np.full((n1, n2), None, dtype=np.ndarray)
+        # -- Format to read
+        tmp1 = self.vars[0].attrs['decimals']
+        tmp2 = self.vars[1].attrs['decimals']
+        fmt1 = f'_%.{tmp1}f'
+        fmt2 = f'_%.{tmp2}f'
+        # -- Read the files
+        logger.info('Reading modes')
+        for i1, var1 in enumerate(tqdm(self.vars[0].values)):
+            for i2, var2 in enumerate(self.vars[1].values):
+
+                name = os.path.join(self.parentFolder, 
+                                    self.vars[0].attrs['long_name'] + fmt1%var1,
+                                    self.vars[1].attrs['long_name'] + fmt2%var2)
+                modes[i1, i2] = Modes(name)
+        self.modes = modes
+
+    # --------------------------------------------------------------------------
+    # --- Re-normalization
+    # --------------------------------------------------------------------------
+    def renormFrequency(self, complete: bool = False):
+        """
+        Transform from code units to real kHz
+
+        @param complete: if true, for each simulation, its own profile file will
+            be used, if false, it will be considered that they share the
+            plasma parameters
+        """
+        if complete:
+            raise Exception('Sorry, still not implemented')
+        # --- Check that we have the information
+        if self.profiles is None:
+            raise Exception('Read first the profiles')
+        
+        # --- precalculate the factor
+        if not complete:
+            B = self.profiles[0,0]['bt0'].values
+            R0 = self.profiles[0,0]['rmajr'].values
+            mi_mp = self.profiles[0,0]['mi_mp'].values
+            ni0 = self.profiles[0,0]['ni'].sel(rho=0.0).values
+            F = B / 2.0 / cnt.pi / R0 \
+                / np.sqrt(cnt.mu_0 * cnt.m_p * mi_mp * ni0 * 1.0e20) / 1000.0
+        
+        # Apply factor
+        self.growthRateBlock['omega'] = self.growthRateBlock['om_r'] * F
+        self.growthRateBlock['omega'].attrs['units'] = 'kHz'
+        self.growthRateBlock['omega'].attrs['long_name'] = 'Mode Frequency'
+
+    def renormCVFP(self, complete: bool = False):
+        """
+        Translate from CVFP to Tfast
+        
+        @param complete: if true, for each simulation, its own profile file will
+            be used, if false, it will be considered that they share the
+            plasma parameters
+    
+        Note that this will only work if one of your coordinates of the scan is
+        the cvft parameter
+        """
+        if 'cvfp' not in self.growthRateBlock.coords.keys():
+            raise Exception('Sorry, cvfp not foun as coordinate')
+        if complete:
+            raise Exception('Sorry, still not implemented')
+        # --- Check that we have the information
+        if self.profiles is None:
+            raise Exception('Read first the profiles')
+        
+        # --- precalculate the factor
+        if not complete:
+            B = self.profiles[0,0]['bt0'].values
+            mi_mp = self.profiles[0,0]['mi_mp'].values
+            ni0 = self.profiles[0,0]['ni'].sel(rho=0.0).values
+            Va0 = B \
+                / np.sqrt(cnt.mu_0 * cnt.m_p * mi_mp * ni0 * 1.0e20)
+        # Get the 'Temperature' in Jules
+        Tf = (self.growthRateBlock['cvfp'].values*Va0)**2 * cnt.m_p * mi_mp
+        # Get the 'Temperature' in keV
+        Tf /= cnt.e*1000.0
+
+        # Save the temperature
+        self.growthRateBlock['Tf'] = xr.DataArray(Tf, dims='cvfp')
+        self.growthRateBlock['Tf'].attrs['units'] = 'keV'
+        self.growthRateBlock['Tf'].attrs['long_name'] = 'Tf'
+
+        # Exchange the axis to this temperature
+        self._swap_cvfp_tf()
+
+    def _swap_cvfp_tf(self):
+        """
+        Exchange cvfp axis with TF axis
+        """
+        self.growthRateBlock = self.growthRateBlock.swap_dims({"cvfp": "Tf"})
+
+    def _swap_tf_cvsp(self):
+        """
+        Exchange cvfp axis with TF axis
+        """
+        self.growthRateBlock = self.growthRateBlock.swap_dims({"cvfp": "Tf"}) 
+    # --------------------------------------------------------------------------
