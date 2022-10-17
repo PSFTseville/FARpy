@@ -15,7 +15,7 @@ class Path:
 
     def __init__(self, machine='PC'):
         """Initialise the class"""
-        home = os.getenv("HOME")
+        home = os.path.expanduser('~')
         self.farpy = os.path.join(home, 'FARpy')
         self.far3d = os.path.join(home, 'FAR3d')
         self.Results = os.path.join(self.farpy, 'Results')

@@ -69,7 +69,7 @@ class Modes:
             results, and the model_name input will be ignored
         """
         if path is None:
-            path = os.path.join(os.getenv('HOME'), 'FAR3d',
+            path = os.path.join(os.path.expanduser('~'), 'FAR3d',
                                 'Models', model_name)
             if not os.path.isdir(path):
                 raise Exception('FAR3d not in home dir? Give me the right path')
