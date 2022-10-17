@@ -16,14 +16,17 @@ class Path:
     def __init__(self, machine='PC'):
         """Initialise the class"""
         home = os.getenv("HOME")
-        self.farpy = os.path.join(home, 'FARpy/')
-        self.far3d = os.path.join(home, 'FAR3d/')
+        self.farpy = os.path.join(home, 'FARpy')
+        self.far3d = os.path.join(home, 'FAR3d')
         self.Results = os.path.join(self.farpy, 'Results')
         # Generic case, assume you have linux :-)
-        self.fonts = [
-            '/usr/share/fonts/truetype',
-            '/usr/share/fonts/opentype',
-        ]
+        if os.path.isdir('/usr/share/fonts/truetype'):
+            self.fonts = [
+                '/usr/share/fonts/truetype',
+                '/usr/share/fonts/opentype',
+            ]
+        else:  # You have windows and I have no idea whe the fonts are
+            self.fonts = ['']
         # Load the custom paths
         file = os.path.join(self.farpy, 'Data', 'MyData', 'Paths.txt')
         nml = f90nml.read(file)

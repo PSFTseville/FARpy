@@ -190,7 +190,7 @@ class Farprt:
             ax.set_ylabel(var)
             ax.set_xlabel('Time [$\\tau_R$]')
 
-    def readGrowthRate(self, convergency_level = 0.1):
+    def readGrowthRate(self, convergency_level = 0.1,):
         """
         Read the Growth Rate and mode frequency
 

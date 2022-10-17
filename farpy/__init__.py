@@ -7,10 +7,10 @@ import farpy._Scan as scan
 import logging
 
 # ------------------------------------------------------------------------------
-# --- Initialise the level of the loggin
+# --- Initialise the level of the logging
 # ------------------------------------------------------------------------------
 logger = logging.getLogger('farpy')
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 try:
     plt.plotSettings()
 except:
