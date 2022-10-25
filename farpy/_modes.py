@@ -21,6 +21,102 @@ logger = logging.getLogger('farpy.Models')
 
 
 # ------------------------------------------------------------------------------
+# --- Variables attributes
+# ------------------------------------------------------------------------------
+attrs = {
+    'vthprlf':{
+        'long_name': '$v_{th\\parallel}$',
+        'units': 'a.u.',
+        'description': 'Thermal parallel velocity eigenfunction'
+    },
+    'vth':{
+        'long_name': '$v_{th}$',
+        'units': 'a.u.',
+        'description': 'Poloidal velocity eigenfunction'
+    },
+    'vr':{
+        'long_name': '$v_{r}$',
+        'units': 'a.u.',
+        'description': 'Radial velocity eigenfunction'
+    },
+    'vprlf':{
+        'long_name': '$v_{\\parallel}^{FI}$',
+        'units': 'a.u.',
+        'description': 'Fast particle parallel velocity '
+    },
+    'uzt':{
+        'long_name': '$u$',
+        'units': 'a.u.',
+        'description': 'Vorticity eigenfunction'
+    },
+    'psi':{
+        'long_name': '$\\psi$',
+        'units': 'a.u.',
+        'description': 'Poloidal flux eigenfunction'
+    },
+    'pr':{
+        'long_name': '$p_r$',
+        'units': 'a.u.',
+        'description': 'Pressure eigenfunction'
+    },
+    'phi':{
+        'long_name': '$\\phi$',
+        'units': 'a.u.',
+        'description': 'Stream function proportional to the electrostatic potential eigenfunction'
+    },
+    'nf':{
+        'long_name': '$n_{FI}$',
+        'units': 'a.u.',
+        'description': 'Energetic particle density eigenfunction'
+    },
+    'evprlfnc':{
+        'long_name': '$E_{FI}^{nc}$',
+        'units': 'a.u.',
+        'description': 'Energetic particle energy (no coupling)'
+    },
+    'evprlf':{
+        'long_name': '$E_{FI}$',
+        'units': 'a.u.',
+        'description': 'Energetic particle energy'
+    },
+    'emenc':{
+        'long_name': '$E_{m}^{nc}$',
+        'units': 'a.u.',
+        'description': 'Magnetic energy (no coupling)'
+    },
+    'eme':{
+        'long_name': '$E_{m}$',
+        'units': 'a.u.',
+        'description': 'Magnetic energy'
+    },
+    'ekenc':{
+        'long_name': '$K^{nc}$',
+        'units': 'a.u.',
+        'description': 'Kinetic energy (no coupling)'
+    },
+    'eke':{
+        'long_name': '$K$',
+        'units': 'a.u.',
+        'description': 'Kinetic energy'
+    },
+    'curzt':{
+        'long_name': '$J$',
+        'units': 'a.u.',
+        'description': 'Toroidal current'
+    },
+    'bth':{
+        'long_name': '$B_{p}$',
+        'units': 'a.u.',
+        'description': 'Poliodal magnetic field eigenfunction'
+    },
+    'br':{
+        'long_name': '$B_{r}$',
+        'units': 'a.u.',
+        'description': 'Radial magnetic field eigenfunction'
+    },
+}
+
+# ------------------------------------------------------------------------------
 # --- Auxiliar function
 # ------------------------------------------------------------------------------
 def _getFileList(path: str = '.', start: str = 'vth', extension: str = ''):
@@ -278,6 +374,9 @@ class Modes:
                 data[file] = xr.DataArray(
                     dum.copy(), dims=('run', 'n', 'm'),
                     coords={'run': runs, 'n': unique_ne, 'm': unique_me})
+        for k in data.keys():
+            if k in attrs:
+                data[k].attrs = attrs[k].copy()
         self.data = data
 
     # --------------------------------------------------------------------------
