@@ -12,6 +12,7 @@ import logging
 import numpy as np
 import xarray as xr
 from farpy._paths import Path
+from farpy._errors import NotFoundFile
 import matplotlib.pyplot as plt
 import farpy._Plotting as libplt
 __all__ = ['Modes']
@@ -141,7 +142,7 @@ def _getFileList(path: str = '.', start: str = 'vth', extension: str = ''):
 
     filenames = sorted(filenames)
     if len(filenames) == 0:
-        raise Exception('No files with matching extension')
+        raise NotFoundFile('No files with matching extension')
 
     return filenames
 
@@ -283,97 +284,103 @@ class Modes:
                         'R_I': ['R', 'I'], 'r': dummy[:, 0]})
         # --- Read the energy files
         # Read a header, to allocate the variables size:
-        files_of_ene = _getFileList(self.path, start='ekenc')
-        filename = os.path.join(self.path, files_of_ene[0])
-        modes_plus_1 = np.loadtxt(filename, skiprows=1).size
-        fid = open(filename)
-        line = fid.readline()
-        fid.close()
-        ne = []
-        me = []
-        try:  # New far3D format, with R, I
-            raise Exception('Dummy line until I got a file with the new format')
-            # found_I = False
-            # for s in line.split():
-            #     if s == 'I':  # n/m repeat, so stop
-            #         found_I = True
-            #         break
-            #     if len(s.split('/')) == 2:
-            #         me.append(int(s.split('/')[0]))
-            #         # the m comes with /, so the only other numbers in the line are n
-            #     try:
-            #         ne.append(int(s))
-            #     except ValueError:  # we have an R
-            #         pass
-            # if not found_I:
-            #     raise Exception()
-        except:
+        try:
+            files_of_ene = _getFileList(self.path, start='ekenc')
+            look_for_energies = True
+        except NotFoundFile:
+            look_for_energies = False
+            logger.warning('No energy file found')
+        if look_for_energies:
+            filename = os.path.join(self.path, files_of_ene[0])
+            modes_plus_1 = np.loadtxt(filename, skiprows=1).size
+            fid = open(filename)
+            line = fid.readline()
+            fid.close()
             ne = []
             me = []
-            for s in line.split():
-                if len(s.split('/')) == 2:
-                    dummy_m = int(s.split('/')[0])
-                    if dummy_m < 0:  # n/m repeat, so stop
-                        break
-                    me.append(dummy_m)
-                # the m comes with /, so the only other numbers in the line are n
-                try:
-                    ne.append(int(s))
-                except ValueError:  # we have an R
-                    pass
-            ne = np.array(ne)
-            unique_ne = np.unique(ne)
-            indeces_ne = np.zeros(ne.size, dtype=int)
-            for iin, nn in enumerate(ne):
-                indeces_ne[iin] = np.where(unique_ne == nn)[0]
-            me = np.array(me)
-            unique_me = np.unique(me)
-            indeces_me = np.zeros(me.size, dtype=int)
-            for iim, mm in enumerate(me):
-                indeces_me[iim] = np.where(unique_me == mm)[0]
-            # Compare the arrays:
-            if not ((unique_ne.size == unique_n.size) or (unique_ne==unique_n).all()):
-                raise Exception('Number of n does not coincide')
-            if not ((unique_me.size == unique_m.size) or (unique_me==unique_m).all()):
-                raise Exception('Number of m does not coincide')
+            try:  # New far3D format, with R, I
+                raise Exception('Dummy line until I got a file with the new format')
+                # found_I = False
+                # for s in line.split():
+                #     if s == 'I':  # n/m repeat, so stop
+                #         found_I = True
+                #         break
+                #     if len(s.split('/')) == 2:
+                #         me.append(int(s.split('/')[0]))
+                #         # the m comes with /, so the only other numbers in the line are n
+                #     try:
+                #         ne.append(int(s))
+                #     except ValueError:  # we have an R
+                #         pass
+                # if not found_I:
+                #     raise Exception()
+            except:
+                ne = []
+                me = []
+                for s in line.split():
+                    if len(s.split('/')) == 2:
+                        dummy_m = int(s.split('/')[0])
+                        if dummy_m < 0:  # n/m repeat, so stop
+                            break
+                        me.append(dummy_m)
+                    # the m comes with /, so the only other numbers in the line are n
+                    try:
+                        ne.append(int(s))
+                    except ValueError:  # we have an R
+                        pass
+                ne = np.array(ne)
+                unique_ne = np.unique(ne)
+                indeces_ne = np.zeros(ne.size, dtype=int)
+                for iin, nn in enumerate(ne):
+                    indeces_ne[iin] = np.where(unique_ne == nn)[0]
+                me = np.array(me)
+                unique_me = np.unique(me)
+                indeces_me = np.zeros(me.size, dtype=int)
+                for iim, mm in enumerate(me):
+                    indeces_me[iim] = np.where(unique_me == mm)[0]
+                # Compare the arrays:
+                if not ((unique_ne.size == unique_n.size) or (unique_ne==unique_n).all()):
+                    raise Exception('Number of n does not coincide')
+                if not ((unique_me.size == unique_m.size) or (unique_me==unique_m).all()):
+                    raise Exception('Number of m does not coincide')
 
-            # preallocate the macro matrix
-            # data = np.empty(
-            #     (nruns, unique_n.size, unique_m.size, 2, len(names), nr))
-            # read all the files:
-            for jfile, file in enumerate(namesE):
-                logger.info('Reading %s', file)
-                dum = np.empty((nruns, unique_ne.size, unique_me.size))
-                dum[:] = np.nan
-                if jfile == 0:
-                    time = []
-                # See if the file exist:
-                filename = os.path.join(self.path, file + '_' + runs[0])
-                if not os.path.isfile(filename):
-                    logger.warning('Not found files for %s', file)
-                    continue
-                for iis, s in enumerate(runs):
-                    filename = os.path.join(self.path, file + '_' + s)
-                    dummy = np.loadtxt(filename, skiprows=1)
+                # preallocate the macro matrix
+                # data = np.empty(
+                #     (nruns, unique_n.size, unique_m.size, 2, len(names), nr))
+                # read all the files:
+                for jfile, file in enumerate(namesE):
+                    logger.info('Reading %s', file)
+                    dum = np.empty((nruns, unique_ne.size, unique_me.size))
+                    dum[:] = np.nan
                     if jfile == 0:
-                        time.append(dummy[0])
-                    # put each colum in place
-                    if file.endswith('nc'):
-                        scan = np.arange(1, modes_plus_1)
-                    else:
-                        scan = np.arange(3, modes_plus_1+2)
-                    for icolum in scan:
-                        # amplitude
+                        time = []
+                    # See if the file exist:
+                    filename = os.path.join(self.path, file + '_' + runs[0])
+                    if not os.path.isfile(filename):
+                        logger.warning('Not found files for %s', file)
+                        continue
+                    for iis, s in enumerate(runs):
+                        filename = os.path.join(self.path, file + '_' + s)
+                        dummy = np.loadtxt(filename, skiprows=1)
+                        if jfile == 0:
+                            time.append(dummy[0])
+                        # put each colum in place
                         if file.endswith('nc'):
-                            j = icolum - 1
+                            scan = np.arange(1, modes_plus_1)
                         else:
-                            j = icolum - 3
-                        dum[iis, indeces_ne[j], indeces_me[j]] = dummy[icolum]
-                if jfile == 0:
-                    data['time'] = xr.DataArray(np.array(time), dims='run')
-                data[file] = xr.DataArray(
-                    dum.copy(), dims=('run', 'n', 'm'),
-                    coords={'run': runs, 'n': unique_ne, 'm': unique_me})
+                            scan = np.arange(3, modes_plus_1+2)
+                        for icolum in scan:
+                            # amplitude
+                            if file.endswith('nc'):
+                                j = icolum - 1
+                            else:
+                                j = icolum - 3
+                            dum[iis, indeces_ne[j], indeces_me[j]] = dummy[icolum]
+                    if jfile == 0:
+                        data['time'] = xr.DataArray(np.array(time), dims='run')
+                    data[file] = xr.DataArray(
+                        dum.copy(), dims=('run', 'n', 'm'),
+                        coords={'run': runs, 'n': unique_ne, 'm': unique_me})
         for k in data.keys():
             if k in attrs:
                 data[k].attrs = attrs[k].copy()
