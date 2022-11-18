@@ -6,7 +6,6 @@ Jose Rueda: jrrueda@us.es
 This module try to kinda mimic the struture of the harmonics object created by
 Pablo Oyola for his library to analyse MEGA output
 """
-
 import os
 import logging
 import numpy as np
@@ -25,37 +24,37 @@ logger = logging.getLogger('farpy.Models')
 # --- Variables attributes
 # ------------------------------------------------------------------------------
 attrs = {
-    'vthprlf':{
+    'vthprlf': {
         'long_name': '$v_{th\\parallel}$',
         'units': 'a.u.',
         'description': 'Thermal parallel velocity eigenfunction'
     },
-    'vth':{
+    'vth': {
         'long_name': '$v_{th}$',
         'units': 'a.u.',
         'description': 'Poloidal velocity eigenfunction'
     },
-    'vr':{
+    'vr': {
         'long_name': '$v_{r}$',
         'units': 'a.u.',
         'description': 'Radial velocity eigenfunction'
     },
-    'vprlf':{
+    'vprlf': {
         'long_name': '$v_{\\parallel}^{FI}$',
         'units': 'a.u.',
         'description': 'Fast particle parallel velocity '
     },
-    'uzt':{
+    'uzt': {
         'long_name': '$u$',
         'units': 'a.u.',
         'description': 'Vorticity eigenfunction'
     },
-    'psi':{
+    'psi': {
         'long_name': '$\\psi$',
         'units': 'a.u.',
         'description': 'Poloidal flux eigenfunction'
     },
-    'pr':{
+    'pr': {
         'long_name': '$p_r$',
         'units': 'a.u.',
         'description': 'Pressure eigenfunction'
@@ -65,52 +64,52 @@ attrs = {
         'units': 'a.u.',
         'description': 'Stream function proportional to the electrostatic potential eigenfunction'
     },
-    'nf':{
+    'nf': {
         'long_name': '$n_{FI}$',
         'units': 'a.u.',
         'description': 'Energetic particle density eigenfunction'
     },
-    'evprlfnc':{
+    'evprlfnc': {
         'long_name': '$E_{FI}^{nc}$',
         'units': 'a.u.',
         'description': 'Energetic particle energy (no coupling)'
     },
-    'evprlf':{
+    'evprlf': {
         'long_name': '$E_{FI}$',
         'units': 'a.u.',
         'description': 'Energetic particle energy'
     },
-    'emenc':{
+    'emenc': {
         'long_name': '$E_{m}^{nc}$',
         'units': 'a.u.',
         'description': 'Magnetic energy (no coupling)'
     },
-    'eme':{
+    'eme': {
         'long_name': '$E_{m}$',
         'units': 'a.u.',
         'description': 'Magnetic energy'
     },
-    'ekenc':{
+    'ekenc': {
         'long_name': '$K^{nc}$',
         'units': 'a.u.',
         'description': 'Kinetic energy (no coupling)'
     },
-    'eke':{
+    'eke': {
         'long_name': '$K$',
         'units': 'a.u.',
         'description': 'Kinetic energy'
     },
-    'curzt':{
+    'curzt': {
         'long_name': '$J$',
         'units': 'a.u.',
         'description': 'Toroidal current'
     },
-    'bth':{
+    'bth': {
         'long_name': '$B_{p}$',
         'units': 'a.u.',
         'description': 'Poliodal magnetic field eigenfunction'
     },
-    'br':{
+    'br': {
         'long_name': '$B_{r}$',
         'units': 'a.u.',
         'description': 'Radial magnetic field eigenfunction'
@@ -118,7 +117,7 @@ attrs = {
 }
 
 # ------------------------------------------------------------------------------
-# --- Auxiliar function
+# --- Auxiliary function
 # ------------------------------------------------------------------------------
 def _getFileList(path: str = '.', start: str = 'vth', extension: str = ''):
     """
@@ -187,7 +186,6 @@ class Modes:
         if names is None:
             names = ['vthprlf', 'vth', 'vr', 'vprlf', 'uzt', 'psi', 'pr',
                      'phi', 'nf', 'curzt', 'bth', 'br',]
-                     #]
         if namesE is None:
             namesE = ['evprlfnc', 'evprlf', 'emenc', 'eme', 'ekenc', 'eke', ]
 

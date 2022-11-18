@@ -54,33 +54,42 @@ ax2.sharey(ax1)
 Scan.modes[0,0].plotRho(var_name='phi', ax=ax3, n=None, m=None, R_I='R')
 Scan.modes[0,0].plotRho(var_name='phi', ax=ax3, n=None, m=None, R_I='I', 
                         line_params={'linestyle':'--'})
-ax3.legend()
+text = ax3.text(0.05, 0.05, 'Temp',
+         horizontalalignment='left',
+         color='k', verticalalignment='bottom',
+         transform=ax3.transAxes)
 
 # Now plot the Omega and gamma
 Scan.plotGrowthRateBlock('omega', ax=ax1, cmap=cmap)
 Scan.plotGrowthRateBlock('gamma', ax=ax2, cmap=cmap)
 
 # Small function to update the plot
-def onclick(event, ax0=ax2, ax=ax3, Scan=Scan):
+def onclick(event, ax0=ax2, ax=ax3, Scan=Scan, text=text):
     if event.button == 1:
         # ask for a new point
         plt.sca(ax0)
         point, = plt.ginput(1)
-        print(point)
         # Clean the axis
         for i in range(len(ax.lines)):
             ax.lines[-1].remove()
         # Plot the new stuff
         i2 = np.argmin(np.abs(Scan.growthRateBlock['Tf'].values-point[0]))
         i1 = np.argmin(np.abs(Scan.growthRateBlock['beta'].values-point[1]))
-        print(i1,i2)
-        print(Scan.modes.shape)
         Scan.modes[i1,i2].plotRho(var_name='phi', ax=ax, n=None, m=None, R_I='R')
         Scan.modes[i1,i2].plotRho(var_name='phi', ax=ax, n=None, m=None, R_I='I', 
                                   line_params={'linestyle': '--'})
         ax.set_title('beta=%.2f, Tf=%.0f' % (Scan.growthRateBlock['beta'][i1], 
                                              Scan.growthRateBlock['Tf'][i2]))
-        ax.legend(loc='lower left', ncol=6)
+        #ax.legend(loc='lower left', ncol=6)
+        kind = np.unravel_index(Scan.modes[i1,i2].data['phi'].argmax(), 
+                                Scan.modes[i1,i2].data['phi'].shape)
+        n = Scan.modes[i1,i2].data['n'][kind[1]]
+        m = Scan.modes[i1,i2].data['m'][kind[2]]
+        text.remove()
+        text = ax3.text(0.05, 0.05, 'n=%i, m=%i' % (n, m),
+                        horizontalalignment='left',
+                        color='k', verticalalignment='bottom',
+                        transform=ax3.transAxes)
         plt.draw()
 fig.canvas.mpl_connect('button_press_event', onclick)
 plt.show()

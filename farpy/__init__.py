@@ -1,5 +1,6 @@
 from farpy._farprt import Farprt
 from farpy._modes import Modes
+from farpy._eigensolver import EigenSolver
 from farpy._namelist import readNamelist
 import farpy._Plotting as plt
 import farpy._Profiles as profiles

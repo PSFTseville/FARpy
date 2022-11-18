@@ -1,5 +1,5 @@
 import numpy as np
-version = '0.0.4'
+version = '0.1.0'
 codename = 'Melon con Jamon'
 
 
