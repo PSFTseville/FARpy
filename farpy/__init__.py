@@ -7,6 +7,7 @@ import farpy._Profiles as profiles
 import farpy._Scan as scan
 from farpy._logger import _CustomFormatter
 import logging
+import farpy.__version__ as ver
 
 # ------------------------------------------------------------------------------
 # --- Initialise the level of the logging
@@ -24,4 +25,6 @@ logger.propagate = False
 try:
     plt.plotSettings()
 except:
-    print('It was not possible to initialise the plotting settings')
+    logger.warning('It was not possible to initialise the plotting settings')
+
+ver.printGITcommit()
