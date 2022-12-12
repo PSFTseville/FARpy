@@ -49,12 +49,15 @@ class EigenSolver():
         # Allocate the space
         self.header = None
         self.egn_vectors = None
+        self.egn_values = None
 
     def _read_egn_mode_asci(self):
         """
 
         :return:
         """
+        if self.egn_values is None:
+            self._read_egn_values()
         # Get the name of the file to be read
         file = os.path.join(self.path, 'egn_mode_asci.dat')
         # Open the file and read the data
@@ -71,9 +74,10 @@ class EigenSolver():
                 'numberOfModes': numberOfModes,
                 'numberOfPoloidalModes': numberOfPoloidalModes,
                 'numberOfRadialPoints': numberOfRadialPoints,
-                'n': nn,
-                'm': mm,
+                'n': np.concatenate((nn, nn), axis=None),
+                'm': np.concatenate((mm, -mm[mm.size::-1]), axis=None),
             }
+
             # To short a bit the naming:
             ns = numberOfRadialPoints
             nmat = numberOfModes
@@ -87,7 +91,7 @@ class EigenSolver():
             dm_rd = np.zeros(self.header['numberOfModes'])
             iacept = np.zeros(self.header['numberOfModes'], int)
             i_orig = np.zeros(self.header['numberOfModes'], int)
-            egn_vectors0 = np.zeros((mn_col, ns))
+            egn_vectors0 = np.zeros((2*mn_col, ns))
             # Aux quantities
             fscale = 1.0
             freq_max = 1.0e+6
@@ -110,31 +114,37 @@ class EigenSolver():
             # Allocate the sapce for the good solutions
             nmat_rd = ic
             egn_vectors = np.zeros((nmat_rd,
-                                    self.header['numberOfPoloidalModes'],
+                                    2*self.header['numberOfPoloidalModes'],
                                     self.header['numberOfRadialPoints']))
             logger.info('Reading modes')
             for j in range(nmat):
                 for m in range(ns):
                     for i in range(mn_col):
+                        mneg = 2*mn_col - i - 1
                         egn_vectors0[i, m] = float(fid.readline())
+                        egn_vectors0[mneg, m] = float(fid.readline())
                 if iacept[j] != -1:
                     egn_vectors[iacept[j], :, :] = egn_vectors0.copy()
             self.extraLines = fid.readlines()
-        self.egn_vectors = egn_vectors
+        self._data['amp'] = xr.DataArray(
+            egn_vectors, dims=('j', 'mode', 'r'),
+            coords={'mode': np.arange(2*nn.size),
+                    'r': rho})
+        self._data['n'] = xr.DataArray(self.header['n'], dims=('mode'))
+        self._data['m'] = xr.DataArray(self.header['m'], dims=('mode'))
+
         self.rho = rho
 
 
     def _read_egn_values(self):
-
         # Get the name of the file to be read
         file = os.path.join(self.path, 'egn_values.dat')
         # Open the file and read the data
-        self.egn_values = np.loadtxt(file)
-
-    def _read_egn_vector(self):
-        """
-        Mimic the effect of the colum.f90 script
-        :return:
-        """
-
-
+        dummy = np.loadtxt(file)
+        self._data = xr.Dataset()
+        self._data['omega'] = xr.DataArray(
+            dummy[:, 0], dims='j',
+            coords={'j': np.arange(dummy.shape[0])})
+        self._data['gamma'] = xr.DataArray(
+            dummy[:, 1], dims='j',
+            coords={'j': np.arange(dummy.shape[0])})
