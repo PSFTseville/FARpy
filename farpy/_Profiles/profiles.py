@@ -41,9 +41,9 @@ class Profiles:
         # --- Default plotting options
         ax_options = {
             'grid': 'both',
-            'xlabel': self.header['info']['rho']['shortName'],
-            'ylabel':  self.header['info'][var]['shortName']
-            + self.header['info'][var]['units'],
+            # 'xlabel': self.header['info']['rho']['shortName'],
+            # 'ylabel':  self.header['info'][var]['shortName']
+            # + self.header['info'][var]['units'],
         }
         ax_options.update(ax_params)
         # --- Create the axes
@@ -52,7 +52,8 @@ class Profiles:
             created = True
         else:
             created = False
-        self.data[var].plot(**line_params)
+        self.data[var].plot(ax=ax, **line_params)
+        ax.set_xlim(self.data.rho[0], self.data.rho[-1])
         # axis beauty:
         if created:
             ax = axis_beauty(ax, ax_options)

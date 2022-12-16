@@ -10,6 +10,7 @@ import logging
 import numpy as np
 import xarray as xr
 import matplotlib.pyplot as plt
+from farpy._Plotting._settings import axis_beauty
 
 # ------------------------------------------------------------------------------
 # --- Auxiliary object
@@ -51,37 +52,57 @@ class EigenSolver():
         self.egn_vectors = None
         self.egn_values = None
 
-    def _read_egn_mode_asci(self):
-        """
-
-        :return:
-        """
+    def _read_egn_mode_asci_header(self):
         if self.egn_values is None:
             self._read_egn_values()
         # Get the name of the file to be read
         file = os.path.join(self.path, 'egn_mode_asci.dat')
-        # Open the file and read the data
+        self._data.attrs['eigenmodeFile'] = file
+        counter = 0
         with open(file, 'r') as fid:
             numberOfModes = int(fid.readline())
+            counter += 1
             numberOfPoloidalModes = int(fid.readline())
+            counter += 1
             numberOfRadialPoints = int(fid.readline())
+            counter += 1
             nn = np.zeros(numberOfPoloidalModes, int)
             mm = np.zeros(numberOfPoloidalModes, int)
             for i in range(numberOfPoloidalModes):
                 mm[i] = int(fid.readline())
                 nn[i] = int(fid.readline())
+                counter += 2
             self.header = {
                 'numberOfModes': numberOfModes,
                 'numberOfPoloidalModes': numberOfPoloidalModes,
                 'numberOfRadialPoints': numberOfRadialPoints,
                 'n': np.concatenate((nn, nn), axis=None),
                 'm': np.concatenate((mm, -mm[mm.size::-1]), axis=None),
+                'headerLines': counter
             }
+        self._data['n'] = xr.DataArray(self.header['n'], dims=('mode'))
+        self._data['m'] = xr.DataArray(self.header['m'], dims=('mode'))
+
+    def _read_egn_mode_asci(self):
+        """
+
+        :return:
+        """
+        if self._data is None:
+            self._read_egn_values()
+        if 'n' not in self._data.keys():
+            self._read_egn_mode_asci_header()
+        # Open the file and read the data
+        with open(self._data.eigenmodeFile, 'r') as fid:
+            print(self._data.eigenmodeFile)
+            # Skip the header:
+            for j in range(self.header['headerLines']):
+                fid.readline()
 
             # To short a bit the naming:
-            ns = numberOfRadialPoints
-            nmat = numberOfModes
-            mn_col = numberOfPoloidalModes
+            ns = self.header['numberOfRadialPoints']
+            nmat = self.header['numberOfModes']
+            mn_col = self.header['numberOfPoloidalModes']
             # Now read the core stuff
             # --- Allocate the vectors
             rho = np.zeros(self.header['numberOfRadialPoints'])
@@ -128,13 +149,10 @@ class EigenSolver():
             self.extraLines = fid.readlines()
         self._data['amp'] = xr.DataArray(
             egn_vectors, dims=('j', 'mode', 'r'),
-            coords={'mode': np.arange(2*nn.size),
+            coords={'mode': np.arange(self._data.n.size),
                     'r': rho})
-        self._data['n'] = xr.DataArray(self.header['n'], dims=('mode'))
-        self._data['m'] = xr.DataArray(self.header['m'], dims=('mode'))
 
         self.rho = rho
-
 
     def _read_egn_values(self):
         # Get the name of the file to be read
@@ -148,3 +166,43 @@ class EigenSolver():
         self._data['gamma'] = xr.DataArray(
             dummy[:, 1], dims='j',
             coords={'j': np.arange(dummy.shape[0])})
+
+    # -------------------------------------------------------------------------
+    # %% Print data on terminal
+    # -------------------------------------------------------------------------
+    def printEigenValues(self):
+        """
+        Make a quick and formated print in the terminal
+        :return:
+        """
+        print('      f      g')
+        print('----------------------')
+        for i in range(self._data['n'].values.size):
+            print('%.3e      %.3e' %
+                  (self._data['omega'].values[i],
+                   self._data['gamma'].values[i]))
+
+    # -------------------------------------------------------------------------
+    # %% Plot modes
+    # -------------------------------------------------------------------------
+    def plotModeAmplitude(self, omega, ax=None, ax_params: dict = {}):
+        """
+        Plot the Mode Amplitude profiles
+        :param f:
+        :param ax:
+        :param ax_params:
+        :return:
+        """
+        ax_options = {}
+        ax_options.update(ax_params)
+        if ax is None:
+            fig, ax = plt.subplots()
+        # Get the modes closer in frequency
+        j = np.argmin(np.abs(self._data.omega.values-omega))
+        modes = self._data.amp.isel(j=j)
+        for i in range(self._data.n.size):
+            label = '(%i, %i)' % (self._data.n.values[i],self._data.m.values[i])
+            ax.plot(modes.r, modes.values[i, :], label=label)
+        ax.legend()
+        ax = axis_beauty(ax, ax_options)
+        return ax

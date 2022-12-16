@@ -18,6 +18,16 @@ def parse_bool(string):
         b = True
     return b
 
+def parse_bool_Python_to_Fortran(boolean):
+    """
+    parse python to fortran booleans ('.false.', '.true.')
+    """
+    if boolean:
+        b = '.true.'
+    else:
+        b = '.false.'
+    return b
+
 
 def give_me_n_numbers(fid, n, dtype=int):
     """
