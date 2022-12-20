@@ -50,7 +50,7 @@ class Scan2D(Scan):
 
         Jose Rueda: jrrueda@us.es
 
-        @param parentFolder: root folder which contain the scan data
+        :param parentFolder: root folder which contain the scan data
         """
         # --- Pre allocate a bit of attributes:
         Scan.__init__(self)
@@ -185,7 +185,7 @@ class Scan2D(Scan):
         """
         Read the namelist files
 
-        @param complete: if True, all namefiles will be read, if False, just the
+        :param complete: if True, all namefiles will be read, if False, just the
             first one
         """
         # -- Allocate the space
@@ -220,7 +220,7 @@ class Scan2D(Scan):
         """
         Read the input profile file
 
-        @param complete if True, all namefiles will be read, if False, just the
+        :param complete if True, all namefiles will be read, if False, just the
         first one
         """
         if self.namelist is None:
@@ -288,7 +288,7 @@ class Scan2D(Scan):
         """
         Transform from code units to real kHz
 
-        @param complete: if true, for each simulation, its own profile file will
+        :param complete: if true, for each simulation, its own profile file will
             be used, if false, it will be considered that they share the
             plasma parameters
         """
@@ -316,7 +316,7 @@ class Scan2D(Scan):
         """
         Translate from CVFP to Tfast
         
-        @param complete: if true, for each simulation, its own profile file will
+        :param complete: if true, for each simulation, its own profile file will
             be used, if false, it will be considered that they share the
             plasma parameters
     

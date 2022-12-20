@@ -33,10 +33,10 @@ class Profiles:
 
         Jose Rueda: jrrueda@us.es
 
-        @param var: variable to plot
-        @param ax: axes where to plot
-        @param ax_params: parameters for the axis beauty
-        @param line_params: line parameters for the plt.plot function
+        :param var: variable to plot
+        :param ax: axes where to plot
+        :param ax_params: parameters for the axis beauty
+        :param line_params: line parameters for the plt.plot function
         """
         # --- Default plotting options
         ax_options = {
@@ -74,12 +74,12 @@ class ProfilesInput(Profiles):
 
         Jose Rueda: jrrueda@us.es
 
-        @param filename: filename for the ASCII file with the profiles, in
+        :param filename: filename for the ASCII file with the profiles, in
             far3D format. If None, the object will be initialised as empty
             ideal if you want to will it with your own profiles and then write
             the file
-        @param DIIID_u: namelist variable of the simulation, to decide the units
-        @param alpha_on: namelist variable of the simulation, to include a
+        :param DIIID_u: namelist variable of the simulation, to decide the units
+        :param alpha_on: namelist variable of the simulation, to include a
             second specie
         """
         self.file = filename

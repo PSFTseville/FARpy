@@ -128,9 +128,9 @@ def _getFileList(path: str = '.', start: str = 'vth', extension: str = ''):
     ft.
     Jose Rueda - jrrueda@us.es
 
-    @param path: path to look for the files.
-    @param start: first characters of the target files
-    @param extension: extension of the target files.
+    :param path: path to look for the files.
+    :param start: first characters of the target files
+    :param extension: extension of the target files.
     """
 
     # --- Making the list of the files in the path.
@@ -159,9 +159,9 @@ class Modes:
         """
         Initialise the class and read the files
 
-        @param model_name: Name of the model to load, it is assumed to be inside
+        :param model_name: Name of the model to load, it is assumed to be inside
             the model folder, which is assumed to be inside the FAR3d folder
-        @param path: if present, this folder will be assumed to contain all the
+        :param path: if present, this folder will be assumed to contain all the
             results, and the model_name input will be ignored
         """
         if path is None:
@@ -180,7 +180,7 @@ class Modes:
         """
         Read the files
 
-        @param names: prefix of the files to be read, if none, all simulation
+        :param names: prefix of the files to be read, if none, all simulation
             files will be read
         """
         if names is None:
@@ -398,18 +398,18 @@ class Modes:
         """
         Plot the radial profile of the mode
 
-        @param run: string identifying the runs to plot. It can be a list of
+        :param run: string identifying the runs to plot. It can be a list of
              strings, in that case, several runs will be plotted
-        @param n: number of the mode to plot. can be an integer or an array 
+        :param n: number of the mode to plot. can be an integer or an array 
             (or list) of integers
-        @param m: number of the mode to plot. can be an integer or an array 
+        :param m: number of the mode to plot. can be an integer or an array 
             (or list) of integers
-        @param R_I: 'R' to plot the real part, 'I' to plot the imaginary
-        @param var_name: variable to be plotted. See self.data for a list
-        @param ax: axes where to plot, is none, new one will be created
-        @param ax_params: axis parameters for the function axis_beauty. Notice
+        :param R_I: 'R' to plot the real part, 'I' to plot the imaginary
+        :param var_name: variable to be plotted. See self.data for a list
+        :param ax: axes where to plot, is none, new one will be created
+        :param ax_params: axis parameters for the function axis_beauty. Notice
             that they will not be applyed if ax is not None
-        @param line_params: line parameters for the function matplotlib plot 
+        :param line_params: line parameters for the function matplotlib plot 
             function. Notice that no label can't be set, as it is set
             automatically in the routine with the m/n value
         """

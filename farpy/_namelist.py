@@ -12,10 +12,10 @@ def readNamelist(file, header: int = 0):
     """
     Read the namelist
 
-    @param file: name of the file to be read
-    @param header: number of header lines to skip, (for the farprt file)
+    :param file: name of the file to be read
+    :param header: number of header lines to skip, (for the farprt file)
 
-    @return out: dictionary containing all the namelist parameters
+    :return out: dictionary containing all the namelist parameters
     """
     # Preallocate the dictionary:
     out = {

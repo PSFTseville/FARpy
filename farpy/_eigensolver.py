@@ -30,9 +30,13 @@ class EigenSolver():
     """
     def __init__(self, path: str = None, model_name: str = None):
         """
+        Read the eigensolver data
 
-        :param folder:
-        :param ID:
+        Jose Rueda: jrrueda@us.es
+
+        :param path: path to look for the files. If None, the model will be
+            assumed to be located in the FAR3D main folder
+        :param model name: model name if none, will be guessed from the path
         """
         if path is None:
             if path is None:
@@ -53,6 +57,11 @@ class EigenSolver():
         self.egn_values = None
 
     def _read_egn_mode_asci_header(self):
+        """
+        Read the header of the egn_mode_ascii file
+
+        Read the mode number and number of modes in the file
+        """
         if self.egn_values is None:
             self._read_egn_values()
         # Get the name of the file to be read
@@ -85,8 +94,7 @@ class EigenSolver():
 
     def _read_egn_mode_asci(self):
         """
-
-        :return:
+        Read the amplitudes stored in the ascii file
         """
         if self._data is None:
             self._read_egn_values()
@@ -155,6 +163,9 @@ class EigenSolver():
         self.rho = rho
 
     def _read_egn_values(self):
+        """
+        Read the eigen values from the 'egn_values.dat' file
+        """
         # Get the name of the file to be read
         file = os.path.join(self.path, 'egn_values.dat')
         # Open the file and read the data
@@ -171,10 +182,7 @@ class EigenSolver():
     # %% Print data on terminal
     # -------------------------------------------------------------------------
     def printEigenValues(self):
-        """
-        Make a quick and formated print in the terminal
-        :return:
-        """
+        """Make a quick and formatted print in the terminal."""
         print('      f      g')
         print('----------------------')
         for i in range(self._data['n'].values.size):
@@ -188,10 +196,13 @@ class EigenSolver():
     def plotModeAmplitude(self, omega, ax=None, ax_params: dict = {}):
         """
         Plot the Mode Amplitude profiles
-        :param f:
-        :param ax:
-        :param ax_params:
-        :return:
+
+        :param omega: omega of the mode to be plotted (the closest one will be
+            chosen)
+        :param ax: axes where to plot, if none, new axis will be created
+        :param ax_params: dictionary with axis parameters for the function
+            axis_beauty
+        :return ax: the axes where the lines where drawn
         """
         ax_options = {}
         ax_options.update(ax_params)
