@@ -6,12 +6,12 @@ Jose Rueda: jrrueda@us.es
 This module try to kinda mimic the struture of the harmonics object created by
 Pablo Oyola for his library to analyse MEGA output
 """
-
 import os
 import logging
 import numpy as np
 import xarray as xr
 from farpy._paths import Path
+from farpy._errors import NotFoundFile
 import matplotlib.pyplot as plt
 import farpy._Plotting as libplt
 __all__ = ['Modes']
@@ -21,7 +21,103 @@ logger = logging.getLogger('farpy.Models')
 
 
 # ------------------------------------------------------------------------------
-# --- Auxiliar function
+# --- Variables attributes
+# ------------------------------------------------------------------------------
+attrs = {
+    'vthprlf': {
+        'long_name': '$v_{th\\parallel}$',
+        'units': 'a.u.',
+        'description': 'Thermal parallel velocity eigenfunction'
+    },
+    'vth': {
+        'long_name': '$v_{th}$',
+        'units': 'a.u.',
+        'description': 'Poloidal velocity eigenfunction'
+    },
+    'vr': {
+        'long_name': '$v_{r}$',
+        'units': 'a.u.',
+        'description': 'Radial velocity eigenfunction'
+    },
+    'vprlf': {
+        'long_name': '$v_{\\parallel}^{FI}$',
+        'units': 'a.u.',
+        'description': 'Fast particle parallel velocity '
+    },
+    'uzt': {
+        'long_name': '$u$',
+        'units': 'a.u.',
+        'description': 'Vorticity eigenfunction'
+    },
+    'psi': {
+        'long_name': '$\\psi$',
+        'units': 'a.u.',
+        'description': 'Poloidal flux eigenfunction'
+    },
+    'pr': {
+        'long_name': '$p_r$',
+        'units': 'a.u.',
+        'description': 'Pressure eigenfunction'
+    },
+    'phi':{
+        'long_name': '$\\phi$',
+        'units': 'a.u.',
+        'description': 'Stream function proportional to the electrostatic potential eigenfunction'
+    },
+    'nf': {
+        'long_name': '$n_{FI}$',
+        'units': 'a.u.',
+        'description': 'Energetic particle density eigenfunction'
+    },
+    'evprlfnc': {
+        'long_name': '$E_{FI}^{nc}$',
+        'units': 'a.u.',
+        'description': 'Energetic particle energy (no coupling)'
+    },
+    'evprlf': {
+        'long_name': '$E_{FI}$',
+        'units': 'a.u.',
+        'description': 'Energetic particle energy'
+    },
+    'emenc': {
+        'long_name': '$E_{m}^{nc}$',
+        'units': 'a.u.',
+        'description': 'Magnetic energy (no coupling)'
+    },
+    'eme': {
+        'long_name': '$E_{m}$',
+        'units': 'a.u.',
+        'description': 'Magnetic energy'
+    },
+    'ekenc': {
+        'long_name': '$K^{nc}$',
+        'units': 'a.u.',
+        'description': 'Kinetic energy (no coupling)'
+    },
+    'eke': {
+        'long_name': '$K$',
+        'units': 'a.u.',
+        'description': 'Kinetic energy'
+    },
+    'curzt': {
+        'long_name': '$J$',
+        'units': 'a.u.',
+        'description': 'Toroidal current'
+    },
+    'bth': {
+        'long_name': '$B_{p}$',
+        'units': 'a.u.',
+        'description': 'Poliodal magnetic field eigenfunction'
+    },
+    'br': {
+        'long_name': '$B_{r}$',
+        'units': 'a.u.',
+        'description': 'Radial magnetic field eigenfunction'
+    },
+}
+
+# ------------------------------------------------------------------------------
+# --- Auxiliary function
 # ------------------------------------------------------------------------------
 def _getFileList(path: str = '.', start: str = 'vth', extension: str = ''):
     """
@@ -32,9 +128,9 @@ def _getFileList(path: str = '.', start: str = 'vth', extension: str = ''):
     ft.
     Jose Rueda - jrrueda@us.es
 
-    @param path: path to look for the files.
-    @param start: first characters of the target files
-    @param extension: extension of the target files.
+    :param path: path to look for the files.
+    :param start: first characters of the target files
+    :param extension: extension of the target files.
     """
 
     # --- Making the list of the files in the path.
@@ -45,7 +141,7 @@ def _getFileList(path: str = '.', start: str = 'vth', extension: str = ''):
 
     filenames = sorted(filenames)
     if len(filenames) == 0:
-        raise Exception('No files with matching extension')
+        raise NotFoundFile('No files with matching extension')
 
     return filenames
 
@@ -63,9 +159,9 @@ class Modes:
         """
         Initialise the class and read the files
 
-        @param model_name: Name of the model to load, it is assumed to be inside
+        :param model_name: Name of the model to load, it is assumed to be inside
             the model folder, which is assumed to be inside the FAR3d folder
-        @param path: if present, this folder will be assumed to contain all the
+        :param path: if present, this folder will be assumed to contain all the
             results, and the model_name input will be ignored
         """
         if path is None:
@@ -84,13 +180,12 @@ class Modes:
         """
         Read the files
 
-        @param names: prefix of the files to be read, if none, all simulation
+        :param names: prefix of the files to be read, if none, all simulation
             files will be read
         """
         if names is None:
             names = ['vthprlf', 'vth', 'vr', 'vprlf', 'uzt', 'psi', 'pr',
                      'phi', 'nf', 'curzt', 'bth', 'br',]
-                     #]
         if namesE is None:
             namesE = ['evprlfnc', 'evprlf', 'emenc', 'eme', 'ekenc', 'eke', ]
 
@@ -187,97 +282,106 @@ class Modes:
                         'R_I': ['R', 'I'], 'r': dummy[:, 0]})
         # --- Read the energy files
         # Read a header, to allocate the variables size:
-        files_of_ene = _getFileList(self.path, start='ekenc')
-        filename = os.path.join(self.path, files_of_ene[0])
-        modes_plus_1 = np.loadtxt(filename, skiprows=1).size
-        fid = open(filename)
-        line = fid.readline()
-        fid.close()
-        ne = []
-        me = []
-        try:  # New far3D format, with R, I
-            raise Exception('Dummy line until I got a file with the new format')
-            # found_I = False
-            # for s in line.split():
-            #     if s == 'I':  # n/m repeat, so stop
-            #         found_I = True
-            #         break
-            #     if len(s.split('/')) == 2:
-            #         me.append(int(s.split('/')[0]))
-            #         # the m comes with /, so the only other numbers in the line are n
-            #     try:
-            #         ne.append(int(s))
-            #     except ValueError:  # we have an R
-            #         pass
-            # if not found_I:
-            #     raise Exception()
-        except:
+        try:
+            files_of_ene = _getFileList(self.path, start='ekenc')
+            look_for_energies = True
+        except NotFoundFile:
+            look_for_energies = False
+            logger.warning('No energy file found')
+        if look_for_energies:
+            filename = os.path.join(self.path, files_of_ene[0])
+            modes_plus_1 = np.loadtxt(filename, skiprows=1).size
+            fid = open(filename)
+            line = fid.readline()
+            fid.close()
             ne = []
             me = []
-            for s in line.split():
-                if len(s.split('/')) == 2:
-                    dummy_m = int(s.split('/')[0])
-                    if dummy_m < 0:  # n/m repeat, so stop
-                        break
-                    me.append(dummy_m)
-                # the m comes with /, so the only other numbers in the line are n
-                try:
-                    ne.append(int(s))
-                except ValueError:  # we have an R
-                    pass
-            ne = np.array(ne)
-            unique_ne = np.unique(ne)
-            indeces_ne = np.zeros(ne.size, dtype=int)
-            for iin, nn in enumerate(ne):
-                indeces_ne[iin] = np.where(unique_ne == nn)[0]
-            me = np.array(me)
-            unique_me = np.unique(me)
-            indeces_me = np.zeros(me.size, dtype=int)
-            for iim, mm in enumerate(me):
-                indeces_me[iim] = np.where(unique_me == mm)[0]
-            # Compare the arrays:
-            if not ((unique_ne.size == unique_n.size) or (unique_ne==unique_n).all()):
-                raise Exception('Number of n does not coincide')
-            if not ((unique_me.size == unique_m.size) or (unique_me==unique_m).all()):
-                raise Exception('Number of m does not coincide')
+            try:  # New far3D format, with R, I
+                raise Exception('Dummy line until I got a file with the new format')
+                # found_I = False
+                # for s in line.split():
+                #     if s == 'I':  # n/m repeat, so stop
+                #         found_I = True
+                #         break
+                #     if len(s.split('/')) == 2:
+                #         me.append(int(s.split('/')[0]))
+                #         # the m comes with /, so the only other numbers in the line are n
+                #     try:
+                #         ne.append(int(s))
+                #     except ValueError:  # we have an R
+                #         pass
+                # if not found_I:
+                #     raise Exception()
+            except:
+                ne = []
+                me = []
+                for s in line.split():
+                    if len(s.split('/')) == 2:
+                        dummy_m = int(s.split('/')[0])
+                        if dummy_m < 0:  # n/m repeat, so stop
+                            break
+                        me.append(dummy_m)
+                    # the m comes with /, so the only other numbers in the line are n
+                    try:
+                        ne.append(int(s))
+                    except ValueError:  # we have an R
+                        pass
+                ne = np.array(ne)
+                unique_ne = np.unique(ne)
+                indeces_ne = np.zeros(ne.size, dtype=int)
+                for iin, nn in enumerate(ne):
+                    indeces_ne[iin] = np.where(unique_ne == nn)[0]
+                me = np.array(me)
+                unique_me = np.unique(me)
+                indeces_me = np.zeros(me.size, dtype=int)
+                for iim, mm in enumerate(me):
+                    indeces_me[iim] = np.where(unique_me == mm)[0]
+                # Compare the arrays:
+                if not ((unique_ne.size == unique_n.size) or (unique_ne==unique_n).all()):
+                    raise Exception('Number of n does not coincide')
+                if not ((unique_me.size == unique_m.size) or (unique_me==unique_m).all()):
+                    raise Exception('Number of m does not coincide')
 
-            # preallocate the macro matrix
-            # data = np.empty(
-            #     (nruns, unique_n.size, unique_m.size, 2, len(names), nr))
-            # read all the files:
-            for jfile, file in enumerate(namesE):
-                logger.info('Reading %s', file)
-                dum = np.empty((nruns, unique_ne.size, unique_me.size))
-                dum[:] = np.nan
-                if jfile == 0:
-                    time = []
-                # See if the file exist:
-                filename = os.path.join(self.path, file + '_' + runs[0])
-                if not os.path.isfile(filename):
-                    logger.warning('Not found files for %s', file)
-                    continue
-                for iis, s in enumerate(runs):
-                    filename = os.path.join(self.path, file + '_' + s)
-                    dummy = np.loadtxt(filename, skiprows=1)
+                # preallocate the macro matrix
+                # data = np.empty(
+                #     (nruns, unique_n.size, unique_m.size, 2, len(names), nr))
+                # read all the files:
+                for jfile, file in enumerate(namesE):
+                    logger.info('Reading %s', file)
+                    dum = np.empty((nruns, unique_ne.size, unique_me.size))
+                    dum[:] = np.nan
                     if jfile == 0:
-                        time.append(dummy[0])
-                    # put each colum in place
-                    if file.endswith('nc'):
-                        scan = np.arange(1, modes_plus_1)
-                    else:
-                        scan = np.arange(3, modes_plus_1+2)
-                    for icolum in scan:
-                        # amplitude
+                        time = []
+                    # See if the file exist:
+                    filename = os.path.join(self.path, file + '_' + runs[0])
+                    if not os.path.isfile(filename):
+                        logger.warning('Not found files for %s', file)
+                        continue
+                    for iis, s in enumerate(runs):
+                        filename = os.path.join(self.path, file + '_' + s)
+                        dummy = np.loadtxt(filename, skiprows=1)
+                        if jfile == 0:
+                            time.append(dummy[0])
+                        # put each colum in place
                         if file.endswith('nc'):
-                            j = icolum - 1
+                            scan = np.arange(1, modes_plus_1)
                         else:
-                            j = icolum - 3
-                        dum[iis, indeces_ne[j], indeces_me[j]] = dummy[icolum]
-                if jfile == 0:
-                    data['time'] = xr.DataArray(np.array(time), dims='run')
-                data[file] = xr.DataArray(
-                    dum.copy(), dims=('run', 'n', 'm'),
-                    coords={'run': runs, 'n': unique_ne, 'm': unique_me})
+                            scan = np.arange(3, modes_plus_1+2)
+                        for icolum in scan:
+                            # amplitude
+                            if file.endswith('nc'):
+                                j = icolum - 1
+                            else:
+                                j = icolum - 3
+                            dum[iis, indeces_ne[j], indeces_me[j]] = dummy[icolum]
+                    if jfile == 0:
+                        data['time'] = xr.DataArray(np.array(time), dims='run')
+                    data[file] = xr.DataArray(
+                        dum.copy(), dims=('run', 'n', 'm'),
+                        coords={'run': runs, 'n': unique_ne, 'm': unique_me})
+        for k in data.keys():
+            if k in attrs:
+                data[k].attrs = attrs[k].copy()
         self.data = data
 
     # --------------------------------------------------------------------------
@@ -294,18 +398,18 @@ class Modes:
         """
         Plot the radial profile of the mode
 
-        @param run: string identifying the runs to plot. It can be a list of
+        :param run: string identifying the runs to plot. It can be a list of
              strings, in that case, several runs will be plotted
-        @param n: number of the mode to plot. can be an integer or an array 
+        :param n: number of the mode to plot. can be an integer or an array 
             (or list) of integers
-        @param m: number of the mode to plot. can be an integer or an array 
+        :param m: number of the mode to plot. can be an integer or an array 
             (or list) of integers
-        @param R_I: 'R' to plot the real part, 'I' to plot the imaginary
-        @param var_name: variable to be plotted. See self.data for a list
-        @param ax: axes where to plot, is none, new one will be created
-        @param ax_params: axis parameters for the function axis_beauty. Notice
+        :param R_I: 'R' to plot the real part, 'I' to plot the imaginary
+        :param var_name: variable to be plotted. See self.data for a list
+        :param ax: axes where to plot, is none, new one will be created
+        :param ax_params: axis parameters for the function axis_beauty. Notice
             that they will not be applyed if ax is not None
-        @param line_params: line parameters for the function matplotlib plot 
+        :param line_params: line parameters for the function matplotlib plot 
             function. Notice that no label can't be set, as it is set
             automatically in the routine with the m/n value
         """

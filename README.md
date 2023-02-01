@@ -30,8 +30,6 @@ To install all non-standard (not machine dependent) packages, you can give a try
 4. Force install the compatible versions using `pip install modulename==X.X.X`. A list of compatible versions is listed here:
 ```python
 scipy==1.7.0
-scikit-image==0.16.2
-pyfftw==0.12.0
 pandas==1.3.1
 ```
 ### Getting started
@@ -57,7 +55,6 @@ There are three files containing the paths and routes for the suite:
 - All objects and methods are documented such that the user can understand what is going on
 - As everything has doc-strings, you can always write in the python terminal <fname>? and you will get all the description of the <fname> method or object
 - The routines in the Example folder are intended to illustrate the use of the different tools in the suite. Please, if you want to play with them, make your own copy on 'MyRoutines', modifying the examples can cause merge conflicts in the future
-- If you have installed Doxygen you can generate the documentation in html and LaTex format just opening a terminal in the Suite root directory and typing  `doxygen Doxyfile`. Once the documentation is generated, you can open the index with the following command `xdg-open doc/index.html`. For a (old and outdated) Doxygen generated documentation, see: <https://hdvirtual.us.es/discovirt/index.php/s/FBjZ9FPfjjwMDS2> download the content and open the index.html file, inside the html folder.
 
 ## Data export
 All data exported and saved by this tool is done with netCDF. Platform independendent and binary format. There is no plans to add aditional formats such as ASCII text.

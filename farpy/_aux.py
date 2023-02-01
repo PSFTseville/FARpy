@@ -18,14 +18,24 @@ def parse_bool(string):
         b = True
     return b
 
+def parse_bool_Python_to_Fortran(boolean):
+    """
+    parse python to fortran booleans ('.false.', '.true.')
+    """
+    if boolean:
+        b = '.true.'
+    else:
+        b = '.false.'
+    return b
+
 
 def give_me_n_numbers(fid, n, dtype=int):
     """
     Optain n numbers from an open file, evein if they are in different lines
 
-    @param fid: pointer to an open file
-    @param n: number of numbers to be read
-    @param dtype: dtype to apply
+    :param fid: pointer to an open file
+    :param n: number of numbers to be read
+    :param dtype: dtype to apply
     """
     numbers = np.zeros(n, dtype=dtype)
     got_numbers = 0
@@ -64,8 +74,8 @@ def update_case_insensitive(a, b):
     Please, Pablo, do not kill me for this extremelly uneficient way of doing
     this
 
-    @params a: Main dictionary
-    @params b: Dictionary with the extra information to include in a
+    :params a: Main dictionary
+    :params b: Dictionary with the extra information to include in a
     """
     keys_a_lower = [key.lower() for key in a.keys()]
     keys_a = [key for key in a.keys()]

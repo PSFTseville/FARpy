@@ -194,7 +194,7 @@ class Farprt:
         """
         Read the Growth Rate and mode frequency
 
-        @param convergency_level: level to consider if there is convergency or
+        :param convergency_level: level to consider if there is convergency or
             not. If the std/mean of the growthrate is larger than this number,
             it will be considered that no convergency is reached.
 

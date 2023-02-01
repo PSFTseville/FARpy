@@ -16,12 +16,13 @@ from farpy._namelist import readNamelist
 from farpy._paths import Path
 from farpy._Profiles.profiles import ProfilesInput
 from farpy._modes import Modes
+from farpy._Scan._General_scan_class import Scan
 
 path = Path()
 logger = logging.getLogger('farpy.Scans')
 
 
-class Scan2D():
+class Scan2D(Scan):
     """
     Read and handle 2D variable scan of FAR3D simulations
 
@@ -49,14 +50,10 @@ class Scan2D():
 
         Jose Rueda: jrrueda@us.es
 
-        @param parentFolder: root folder which contain the scan data
+        :param parentFolder: root folder which contain the scan data
         """
         # --- Pre allocate a bit of attributes:
-        self.parentFolder = parentFolder
-        self.farprt = None  # It will be file with the farprt objects
-        self.growthRateBlock = None  # It will be filled with the growthrate
-        self.namelist = None  # It will be filled with the namelists
-        self.profiles = None  # It will be filled with the profiles
+        Scan.__init__(self)
         # --- See what it is inside
         var1Values = []
         var2Values = []
@@ -94,7 +91,7 @@ class Scan2D():
     # --------------------------------------------------------------------------
     def readGrowthRateBlock(self):
         """
-        Read the glowth rate and mode frequency from the scan
+        Read the growth rate and mode frequency from the scan
 
         #TODO: handle the case whith different n
         """
@@ -188,7 +185,7 @@ class Scan2D():
         """
         Read the namelist files
 
-        @param complete: if True, all namefiles will be read, if False, just the
+        :param complete: if True, all namefiles will be read, if False, just the
             first one
         """
         # -- Allocate the space
@@ -223,7 +220,7 @@ class Scan2D():
         """
         Read the input profile file
 
-        @param complete if True, all namefiles will be read, if False, just the
+        :param complete if True, all namefiles will be read, if False, just the
         first one
         """
         if self.namelist is None:
@@ -291,7 +288,7 @@ class Scan2D():
         """
         Transform from code units to real kHz
 
-        @param complete: if true, for each simulation, its own profile file will
+        :param complete: if true, for each simulation, its own profile file will
             be used, if false, it will be considered that they share the
             plasma parameters
         """
@@ -319,7 +316,7 @@ class Scan2D():
         """
         Translate from CVFP to Tfast
         
-        @param complete: if true, for each simulation, its own profile file will
+        :param complete: if true, for each simulation, its own profile file will
             be used, if false, it will be considered that they share the
             plasma parameters
     

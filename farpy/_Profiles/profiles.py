@@ -33,17 +33,17 @@ class Profiles:
 
         Jose Rueda: jrrueda@us.es
 
-        @param var: variable to plot
-        @param ax: axes where to plot
-        @param ax_params: parameters for the axis beauty
-        @param line_params: line parameters for the plt.plot function
+        :param var: variable to plot
+        :param ax: axes where to plot
+        :param ax_params: parameters for the axis beauty
+        :param line_params: line parameters for the plt.plot function
         """
         # --- Default plotting options
         ax_options = {
             'grid': 'both',
-            'xlabel': self.header['info']['rho']['shortName'],
-            'ylabel':  self.header['info'][var]['shortName']
-            + self.header['info'][var]['units'],
+            # 'xlabel': self.header['info']['rho']['shortName'],
+            # 'ylabel':  self.header['info'][var]['shortName']
+            # + self.header['info'][var]['units'],
         }
         ax_options.update(ax_params)
         # --- Create the axes
@@ -52,7 +52,8 @@ class Profiles:
             created = True
         else:
             created = False
-        self.data[var].plot(**line_params)
+        self.data[var].plot(ax=ax, **line_params)
+        ax.set_xlim(self.data.rho[0], self.data.rho[-1])
         # axis beauty:
         if created:
             ax = axis_beauty(ax, ax_options)
@@ -73,12 +74,12 @@ class ProfilesInput(Profiles):
 
         Jose Rueda: jrrueda@us.es
 
-        @param filename: filename for the ASCII file with the profiles, in
+        :param filename: filename for the ASCII file with the profiles, in
             far3D format. If None, the object will be initialised as empty
             ideal if you want to will it with your own profiles and then write
             the file
-        @param DIIID_u: namelist variable of the simulation, to decide the units
-        @param alpha_on: namelist variable of the simulation, to include a
+        :param DIIID_u: namelist variable of the simulation, to decide the units
+        :param alpha_on: namelist variable of the simulation, to include a
             second specie
         """
         self.file = filename

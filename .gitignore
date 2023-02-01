@@ -1,6 +1,6 @@
 # VSCODE
 .vscode/
-
+.idea/
 # Output files
 *.nc
 
